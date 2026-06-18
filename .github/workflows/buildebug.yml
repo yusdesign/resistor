@@ -1,4 +1,4 @@
-name: Build Resistor Debug
+name: Build Resistor Debug APK
 
 on:
   push:
@@ -24,12 +24,13 @@ jobs:
           java-version: '21'
       
       - name: Install dependencies
-        run: |
-          npm install
-          npm run build
+        run: npm ci
+      
+      - name: Build web assets
+        run: npm run build
       
       - name: Sync Capacitor
-        run: npx cap sync android
+        run: npx @capacitor/cli sync android
       
       - name: Build debug APK
         run: |
