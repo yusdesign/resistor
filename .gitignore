@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+android/
+
+# Capacitor (GHA will sync)
+.capacitor/
+
+# OS files
+.DS_Store
+*.log
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Shell scripts
+*.sh
