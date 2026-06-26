@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 android/
+creative/
 
 # Capacitor (GHA will sync)
 .capacitor/

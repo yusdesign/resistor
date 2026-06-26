@@ -70,6 +70,16 @@
     .volume-icon { color: #666; font-size: 16px; width: 20px; }
     @media (max-width: 400px) { .player { padding: 28px 20px 24px; } .artwork { font-size: 56px; } .now-playing h2 { font-size: 17px; } .play-btn { width: 64px; height: 64px; font-size: 28px; } }
     @media (prefers-color-scheme: light) { :root { --bg: #f0f0f5; --card: rgba(255,255,255,0.6); --border: rgba(0,0,0,0.08); --text: #1a1a2e; --muted: #666; } }
+    .control-btn {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+      color: var(--text);
+    }
+    .control-btn:hover { opacity: 1; }
   </style>
 </head>
 <body>
@@ -90,6 +100,20 @@
       <span class="volume-icon">🔊</span>
       <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8">
     </div>
+    <!-- Lyrics Section -->
+    <!-- Controls -->
+    <div class="controls">
+      <button id="showLyricsBtn" class="control-btn" title="Show Lyrics">📜</button>
+    </div>
+    <div class="lyrics-panel" id="lyricsPanel">
+      <div class="header">
+        <span>📜 Lyrics</span>
+        <span id="closeLyrics" style="cursor:pointer;">✕</span>
+      </div>
+      <div class="content" id="lyricsContent">
+        <p style="color: var(--muted);">🎵 Play a track to see lyrics.</p>
+      </div>
+    </div>
   </div>
   <script>
     const STREAM_URL = 'https://ice1.somafm.com/indiepop-32-aac';
@@ -101,7 +125,43 @@
     const volumeSlider = document.getElementById('volumeSlider');
     let isPlaying = false, audio = null, metadataTimer = null, reconnectAttempts = 0;
     const MAX_RECONNECT = 3;
+    // ─── LYRICS UI ───
+    const showLyricsBtn = document.getElementById('showLyricsBtn');
+    const closeLyrics = document.getElementById('closeLyrics');
+    const lyricsPanel = document.getElementById('lyricsPanel');
+    const lyricsContent = document.getElementById('lyricsContent');
 
+    async function displayLyrics(artist, title) {
+      lyricsContent.innerHTML = '<p style="color: var(--muted);">🔍 Searching...</p>';
+      lyricsPanel.style.display = 'block';
+
+      const lyrics = await fetchLyrics(artist, title);
+      if (lyrics) {
+        const lines = lyrics.split('\n').filter(line => line.trim());
+        let html = '';
+        lines.forEach(line => {
+          html += `<span class="line">${line}</span>`;
+        });
+        lyricsContent.innerHTML = html;
+      } else {
+        lyricsContent.innerHTML = '<p style="color: var(--muted);">📝 No lyrics found.</p>';
+      }
+    }
+
+    showLyricsBtn.addEventListener('click', () => {
+      const artist = artistEl.textContent;
+      const title = titleEl.textContent;
+      if (artist && title && artist !== 'SomaFM' && title !== 'Resistor') {
+        displayLyrics(artist, title);
+      } else {
+        lyricsContent.innerHTML = '<p style="color: var(--muted);">🎵 Play a track first.</p>';
+        lyricsPanel.style.display = 'block';
+      }
+    });
+
+    closeLyrics.addEventListener('click', () => {
+      lyricsPanel.style.display = 'none';
+    });
     function setStatus(text, type = '') {
       statusEl.textContent = text;
       statusEl.className = 'status ' + type;

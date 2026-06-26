@@ -1,0 +1,38 @@
+/* ─── LYRICS UI ─── */
+.lyrics-panel {
+  display: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 16px;
+  margin-top: 16px;
+  text-align: left;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.lyrics-panel .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.lyrics-panel .content {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.lyrics-panel .content .line {
+  display: block;
+  padding: 2px 0;
+}
+
+.lyrics-panel .content .line.active {
+  color: var(--accent);
+  font-weight: 600;
+}
