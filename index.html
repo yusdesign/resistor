@@ -584,7 +584,7 @@
 
   <script>
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    //  RESISTOR RADIO — Complete
+    //  RESISTOR RADIO — Core Logic
     //  SomaFM Indie Pop · For Elise
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -729,11 +729,11 @@
       let html = '';
       tracklist.forEach(t => {
         html += `
-              <div class="track-item">
-                <span>${t.artist} — ${t.title}</span>
-                <span class="count">${t.count}x</span>
-              </div>
-            `;
+                <div class="track-item">
+                  <span>${t.artist} — ${t.title}</span>
+                  <span class="count">${t.count}x</span>
+                </div>
+              `;
       });
       tracklistItems.innerHTML = html;
     }
@@ -760,7 +760,6 @@
     }
 
     function applySettings() {
-      // Dark mode
       if (settings.darkMode) {
         document.documentElement.removeAttribute('data-theme');
         darkModeToggle.checked = true;
@@ -768,12 +767,9 @@
         document.documentElement.setAttribute('data-theme', 'light');
         darkModeToggle.checked = false;
       }
-      // Buffer
       bufferSize.value = settings.bufferSize;
       bufferLabel.textContent = settings.bufferSize + 's';
-      // Auto-reconnect
       autoReconnectToggle.checked = settings.autoReconnect;
-      // Elise Mode
       eliseModeToggle.checked = settings.eliseMode;
       if (settings.eliseMode) {
         enableEliseMode();
@@ -795,7 +791,6 @@
       if (e.target === settingsModal) closeSettingsModal();
     });
 
-    // Settings events
     darkModeToggle.addEventListener('change', () => {
       settings.darkMode = darkModeToggle.checked;
       applySettings();
@@ -820,14 +815,14 @@
       }
     });
 
-    // ─── ELISE MODE (Dedication) ───
+    // ─── ELISE MODE ───
     function enableEliseMode() {
       isEliseMode = true;
       dedicationContainer.innerHTML = `
-            <div class="dedication-badge">
-              ❤️ Listening for Elise
-            </div>
-          `;
+              <div class="dedication-badge">
+                ❤️ Listening for Elise
+              </div>
+            `;
       toggleDedicationBtn.classList.add('active');
       setStatus('❤️ Elise Mode — Dedicated', 'playing');
     }
@@ -916,21 +911,36 @@
       lyricsPanel.style.display = 'none';
     });
 
-    // ─── METADATA ───
+    // ─── 🔥 FIXED METADATA FETCH ───
     async function fetchMetadata() {
       try {
+        console.log('📡 Fetching metadata...');
+
+        // Method 1: Try fetching the stream with Icy-MetaData header
         const response = await fetch(STREAM_URL, {
           headers: { 'Icy-MetaData': '1' },
           signal: AbortSignal.timeout(5000)
         });
+
+        // Check if we got a valid response
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        // Get the response as text (first chunk)
         const reader = response.body.getReader();
         const { value } = await reader.read();
         const chunk = new TextDecoder().decode(value);
         reader.releaseLock();
+
+        console.log('📡 Chunk received:', chunk.substring(0, 200) + '...');
+
+        // Look for the StreamTitle in the chunk
         const match = chunk.match(/StreamTitle='([^']+)'/);
         if (match) {
           const full = match[1].trim();
           if (full && full !== '') {
+            console.log('✅ Metadata match:', full);
             let artist = 'SomaFM';
             let title = full;
             if (full.includes(' - ')) {
@@ -942,10 +952,48 @@
             titleEl.textContent = title;
             setStatus('🎵 Now playing', 'playing');
             addTrack(title, artist);
+            return; // Success! Exit the function.
           }
         }
+
+        // If we get here, the stream might not have had metadata in the first chunk
+        // Method 2: Fallback using a CORS proxy (allorigins)
+        console.log('📡 Method 1 failed, trying proxy...');
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(STREAM_URL)}`;
+        const proxyResponse = await fetch(proxyUrl, {
+          signal: AbortSignal.timeout(5000)
+        });
+
+        if (proxyResponse.ok) {
+          const proxyText = await proxyResponse.text();
+          const proxyMatch = proxyText.match(/StreamTitle='([^']+)'/);
+          if (proxyMatch) {
+            const full = proxyMatch[1].trim();
+            if (full && full !== '') {
+              console.log('✅ Metadata match via proxy:', full);
+              let artist = 'SomaFM';
+              let title = full;
+              if (full.includes(' - ')) {
+                const parts = full.split(' - ', 2);
+                artist = parts[0].trim();
+                title = parts[1].trim();
+              }
+              artistEl.textContent = artist;
+              titleEl.textContent = title;
+              setStatus('🎵 Now playing', 'playing');
+              addTrack(title, artist);
+              return;
+            }
+          }
+        }
+
+        // If all methods fail, log a warning
+        console.warn('⚠️ No StreamTitle found in response');
+        setStatus('🎵 Playing (metadata unavailable)', '');
+
       } catch (e) {
-        console.debug('Metadata fetch:', e.message);
+        console.error('❌ fetchMetadata error:', e.message);
+        // Don't update UI here; just log the error
       }
     }
 
@@ -998,7 +1046,7 @@
         reconnectAttempts = 0;
         if (metadataTimer) clearInterval(metadataTimer);
         metadataTimer = setInterval(fetchMetadata, 8000);
-        fetchMetadata();
+        fetchMetadata(); // Fire immediately
         if (settings.eliseMode) {
           setStatus('❤️ Elise Mode — Dedicated', 'playing');
         }
