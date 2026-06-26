@@ -2,10 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Resistor Radio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Resistor · Верста</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* ─── RESET & ROOT ─── */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     :root {
       --bg: #0d0d1a;
       --card: rgba(255,255,255,0.05);
@@ -14,122 +20,869 @@
       --muted: #888;
       --accent: #ff6b6b;
       --playing: #4ecdc4;
+      --surface: #1a1a2e;
+      --shadow: rgba(0,0,0,0.8);
+      --input-bg: rgba(255,255,255,0.1);
+      --radius: 2px;
+      --font: -apple-system, system-ui, sans-serif;
     }
+
+    [data-theme="light"] {
+      --bg: #f0f0f5;
+      --card: rgba(255,255,255,0.6);
+      --border: rgba(0,0,0,0.08);
+      --text: #1a1a2e;
+      --muted: #666;
+      --surface: #ffffff;
+      --shadow: rgba(0,0,0,0.1);
+      --input-bg: rgba(0,0,0,0.05);
+    }
+
     body {
       min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       justify-content: center;
       align-items: center;
       background: var(--bg);
-      font-family: -apple-system, system-ui, sans-serif;
+      font-family: var(--font);
       padding: 16px;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
+      transition: background 0.3s, color 0.3s;
+      color: var(--text);
     }
+
+    /* ─── PLAYER CARD ─── */
     .player {
       background: var(--card);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid var(--border);
-      border-radius: 32px;
-      padding: 40px 32px 32px;
+      border-radius: var(--radius);
+      padding: 24px 20px;
       width: 100%;
-      max-width: 360px;
+      max-width: 400px;
       text-align: center;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      box-shadow: 0 20px 60px var(--shadow);
+      transition: background 0.3s, box-shadow 0.3s;
+      padding-left: max(20px, env(safe-area-inset-left));
+      padding-right: max(20px, env(safe-area-inset-right));
+      padding-top: max(24px, env(safe-area-inset-top));
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
     }
-    .artwork { font-size: 72px; margin-bottom: 16px; display: block; }
-    .now-playing { margin-bottom: 24px; min-height: 72px; }
-    .now-playing h2 { color: var(--text); font-size: 20px; font-weight: 600; min-height: 28px; margin-bottom: 4px; }
-    .now-playing .artist { color: var(--muted); font-size: 14px; }
-    .play-btn {
-      width: 72px; height: 72px; border-radius: 50%; border: none;
-      background: var(--accent); color: white; font-size: 32px;
-      cursor: pointer; transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-      box-shadow: 0 4px 20px rgba(255,107,107,0.3);
-      touch-action: manipulation;
+
+    /* ─── HEADER ─── */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
     }
-    .play-btn:hover { transform: scale(1.05); }
-    .play-btn:active { transform: scale(0.92); }
-    .play-btn.playing { background: var(--playing); box-shadow: 0 4px 20px rgba(78,205,196,0.3); }
-    .station-info { margin-top: 20px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-    .badge {
-      background: rgba(255,255,255,0.06); color: #aaa;
-      padding: 4px 14px; border-radius: 20px; font-size: 11px;
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .badge.accent { background: rgba(255,107,107,0.12); color: var(--accent); }
-    .badge.playing-badge { background: rgba(78,205,196,0.12); color: var(--playing); }
-    .status { color: #555; font-size: 12px; margin-top: 14px; min-height: 18px; }
-    .status.error { color: var(--accent); }
-    .status.playing { color: var(--playing); }
-    .status.buffering { color: #f9a825; }
-    .volume-wrap { margin-top: 16px; display: flex; align-items: center; gap: 10px; opacity: 0.4; transition: opacity 0.3s; }
-    .volume-wrap:hover { opacity: 0.8; }
-    .volume-wrap input[type="range"] { flex: 1; height: 3px; -webkit-appearance: none; background: rgba(255,255,255,0.1); border-radius: 2px; outline: none; }
-    .volume-wrap input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
-    .volume-icon { color: #666; font-size: 16px; width: 20px; }
-    @media (max-width: 400px) { .player { padding: 28px 20px 24px; } .artwork { font-size: 56px; } .now-playing h2 { font-size: 17px; } .play-btn { width: 64px; height: 64px; font-size: 28px; } }
-    @media (prefers-color-scheme: light) { :root { --bg: #f0f0f5; --card: rgba(255,255,255,0.6); --border: rgba(0,0,0,0.08); --text: #1a1a2e; --muted: #666; } }
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .header-actions span {
+      cursor: pointer;
+      font-size: 20px;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+    .header-actions span:hover {
+      opacity: 1;
+    }
+
+    /* ─── ARTWORK ─── */
+    .artwork {
+      font-size: 48px;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    /* ─── NOW PLAYING ─── */
+    .now-playing {
+      margin-bottom: 16px;
+      min-height: 72px;
+      cursor: pointer;
+    }
+    .now-playing h2 {
+      font-size: 20px;
+      font-weight: 600;
+      min-height: 28px;
+      margin-bottom: 4px;
+      transition: color 0.3s;
+    }
+    .now-playing .artist {
+      color: var(--muted);
+      font-size: 14px;
+      transition: color 0.3s;
+    }
+
+    /* ─── CONTROLS BAR ─── */
+    .controls-bar {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin: 12px 0 8px;
+      flex-wrap: wrap;
+    }
     .control-btn {
       background: transparent;
       border: none;
-      font-size: 20px;
+      font-size: 22px;
       cursor: pointer;
-      opacity: 0.6;
-      transition: opacity 0.2s;
+      opacity: 0.5;
+      transition: opacity 0.2s, transform 0.15s;
+      color: var(--text);
+      padding: 4px;
+      line-height: 1;
+    }
+    .control-btn:hover {
+      opacity: 0.9;
+    }
+    .control-btn:active {
+      transform: scale(0.9);
+    }
+    .control-btn.active {
+      opacity: 1;
+      color: var(--playing);
+    }
+
+    /* ─── PLAY BUTTON ─── */
+    .play-btn {
+      width: 72px;
+      height: 72px;
+      border-radius: 50% !important;
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-size: 32px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 20px rgba(255,107,107,0.3);
+      touch-action: manipulation;
+      margin: 4px auto 8px;
+    }
+    .play-btn:hover {
+      transform: scale(1.05);
+    }
+    .play-btn:active {
+      transform: scale(0.92);
+    }
+    .play-btn.playing {
+      background: var(--playing);
+      box-shadow: 0 4px 20px rgba(78,205,196,0.3);
+    }
+
+    /* ─── BADGES ─── */
+    .station-info {
+      margin-top: 8px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      padding: 4px 14px;
+      border-radius: var(--radius);
+      font-size: 11px;
+      transition: background 0.2s, color 0.3s;
+      border: 1px solid transparent;
+    }
+    .badge.accent {
+      background: rgba(255,107,107,0.12);
+      color: var(--accent);
+      border-color: rgba(255,107,107,0.1);
+    }
+    .badge.playing-badge {
+      background: rgba(78,205,196,0.12);
+      color: var(--playing);
+      border-color: rgba(78,205,196,0.1);
+    }
+
+    /* ─── STATUS ─── */
+    .status {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 10px;
+      min-height: 18px;
+      transition: color 0.3s;
+    }
+    .status.error {
+      color: var(--accent);
+    }
+    .status.playing {
+      color: var(--playing);
+    }
+    .status.buffering {
+      color: #f9a825;
+    }
+
+    /* ─── VOLUME ─── */
+    .volume-wrap {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0.4;
+      transition: opacity 0.3s;
+    }
+    .volume-wrap:hover {
+      opacity: 0.8;
+    }
+    .volume-wrap input[type="range"] {
+      flex: 1;
+      height: 3px;
+      -webkit-appearance: none;
+      background: var(--input-bg);
+      border-radius: var(--radius);
+      outline: none;
+    }
+    .volume-wrap input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+    }
+    .volume-icon {
+      color: var(--muted);
+      font-size: 16px;
+      width: 20px;
+    }
+
+    /* ─── LYRICS PANEL ─── */
+    .lyrics-panel {
+      display: none;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-top: 14px;
+      text-align: left;
+      max-height: 250px;
+      overflow-y: auto;
+      transition: all 0.3s ease;
+    }
+    .lyrics-panel .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .lyrics-panel .content {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+      font-family: var(--font);
+    }
+    .lyrics-panel .content .line {
+      display: block;
+      padding: 1px 0;
+    }
+    .lyrics-panel .content .line.active {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* ─── TRACKLIST ─── */
+    .tracklist-section {
+      margin-top: 14px;
+      text-align: left;
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+    }
+    .tracklist-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    .tracklist-header:hover {
       color: var(--text);
     }
-    .control-btn:hover { opacity: 1; }
+    .tracklist-header .arrow {
+      transition: transform 0.3s;
+    }
+    .tracklist-header .arrow.open {
+      transform: rotate(180deg);
+    }
+    .tracklist-items {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.3s ease;
+      opacity: 0;
+    }
+    .tracklist-items.open {
+      max-height: 300px;
+      opacity: 1;
+      overflow-y: auto;
+    }
+    .tracklist-items .track-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      font-size: 13px;
+      border-bottom: 1px solid var(--border);
+      color: var(--muted);
+      transition: color 0.3s;
+    }
+    .tracklist-items .track-item .count {
+      color: var(--accent);
+      font-size: 11px;
+      background: rgba(255,107,107,0.08);
+      padding: 0 8px;
+      border-radius: var(--radius);
+    }
+
+    /* ─── SETTINGS MODAL ─── */
+    .settings-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .settings-overlay.open {
+      display: flex;
+    }
+    .settings-modal {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      max-width: 340px;
+      width: 100%;
+      box-shadow: 0 20px 60px var(--shadow);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    .settings-modal h3 {
+      font-size: 18px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .settings-modal .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .settings-modal .setting-row:last-child {
+      border-bottom: none;
+    }
+    .settings-modal .setting-row label {
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .settings-modal input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .settings-modal input[type="range"] {
+      width: 100px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .settings-modal .range-value {
+      font-size: 13px;
+      color: var(--muted);
+      min-width: 30px;
+      text-align: right;
+    }
+    .settings-close-btn {
+      margin-top: 16px;
+      width: 100%;
+      padding: 10px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 14px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .settings-close-btn:hover {
+      opacity: 0.8;
+    }
+
+    /* ─── DEDICATION BADGE ─── */
+    .dedication-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--accent);
+      background: rgba(255,107,107,0.1);
+      padding: 4px 12px;
+      border-radius: var(--radius);
+      margin-top: 6px;
+      border: 1px solid rgba(255,107,107,0.15);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 0.7;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 1;
+        transform: scale(1.02);
+      }
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 400px) {
+      .player {
+        padding: 20px 16px;
+      }
+      .artwork {
+        font-size: 40px;
+      }
+      .now-playing h2 {
+        font-size: 17px;
+      }
+      .play-btn {
+        width: 64px;
+        height: 64px;
+        font-size: 28px;
+      }
+      .controls-bar {
+        gap: 12px;
+      }
+      .control-btn {
+        font-size: 18px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="player">
-    <span class="artwork" aria-hidden="true">🎸</span>
-    <div class="now-playing">
+
+  <div class="player" id="app">
+    <!-- ─── HEADER ─── -->
+    <div class="header">
+      <h1>🎸 Resistor</h1>
+      <div class="header-actions">
+        <span id="tracklistToggle" title="Tracklist">📋</span>
+        <span id="settingsToggle" title="Settings">⚙️</span>
+      </div>
+    </div>
+
+    <!-- ─── ARTWORK ─── -->
+    <span class="artwork" id="artworkIcon" aria-hidden="true">🎸</span>
+
+    <!-- ─── NOW PLAYING ─── -->
+    <div class="now-playing" id="nowPlaying" title="Click to copy track info">
       <h2 id="title">Resistor</h2>
       <p class="artist" id="artist">SomaFM Indie Pop</p>
     </div>
+
+    <!-- ─── PLAY BUTTON ─── -->
     <button class="play-btn" id="playBtn" aria-label="Play / Pause">▶</button>
+
+    <!-- ─── CONTROLS BAR ─── -->
+    <div class="controls-bar">
+      <button id="showLyricsBtn" class="control-btn" title="Show Lyrics">📜</button>
+      <button id="toggleDedicationBtn" class="control-btn" title="Elise Mode">❤️</button>
+    </div>
+
+    <!-- ─── BADGES ─── -->
     <div class="station-info">
-      <span class="badge">SomaFM</span>
+      <span class="badge" id="stationBadge">SomaFM</span>
       <span class="badge accent">32k AAC</span>
       <span class="badge playing-badge" id="liveBadge">● Live</span>
     </div>
+
+    <!-- ─── DEDICATION BADGE ─── -->
+    <div id="dedicationContainer"></div>
+
+    <!-- ─── STATUS ─── -->
     <div class="status" id="status">Ready to play</div>
+
+    <!-- ─── VOLUME ─── -->
     <div class="volume-wrap">
       <span class="volume-icon">🔊</span>
       <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.8">
     </div>
-    <!-- Lyrics Section -->
-    <!-- Controls -->
-    <div class="controls">
-      <button id="showLyricsBtn" class="control-btn" title="Show Lyrics">📜</button>
-    </div>
+
+    <!-- ─── LYRICS PANEL ─── -->
     <div class="lyrics-panel" id="lyricsPanel">
       <div class="header">
         <span>📜 Lyrics</span>
-        <span id="closeLyrics" style="cursor:pointer;">✕</span>
+        <span id="closeLyrics" style="cursor:pointer; font-size:16px;">✕</span>
       </div>
       <div class="content" id="lyricsContent">
         <p style="color: var(--muted);">🎵 Play a track to see lyrics.</p>
       </div>
     </div>
+
+    <!-- ─── TRACKLIST ─── -->
+    <div class="tracklist-section">
+      <div class="tracklist-header" id="tracklistHeader">
+        <span>📋 Tracklist (<span id="trackCount">0</span>)</span>
+        <span class="arrow" id="tracklistArrow">▼</span>
+      </div>
+      <div class="tracklist-items" id="tracklistItems">
+        <!-- dynamically populated -->
+      </div>
+    </div>
   </div>
+
+  <!-- ─── SETTINGS MODAL ─── -->
+  <div class="settings-overlay" id="settingsModal">
+    <div class="settings-modal">
+      <h3>⚙️ Settings</h3>
+      <div class="setting-row">
+        <label for="darkModeToggle">🌙 Dark Mode</label>
+        <input type="checkbox" id="darkModeToggle" checked>
+      </div>
+      <div class="setting-row">
+        <label for="bufferSize">⏳ Buffer Size</label>
+        <input type="range" id="bufferSize" min="10" max="120" value="30">
+        <span class="range-value" id="bufferLabel">30s</span>
+      </div>
+      <div class="setting-row">
+        <label for="autoReconnectToggle">🔄 Auto-Reconnect</label>
+        <input type="checkbox" id="autoReconnectToggle" checked>
+      </div>
+      <div class="setting-row">
+        <label for="eliseModeToggle">❤️ Elise Mode</label>
+        <input type="checkbox" id="eliseModeToggle">
+      </div>
+      <button class="settings-close-btn" id="closeSettings">Close</button>
+    </div>
+  </div>
+
   <script>
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    //  RESISTOR RADIO — Complete
+    //  SomaFM Indie Pop · For Elise
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    // ─── CONFIG ───
     const STREAM_URL = 'https://ice1.somafm.com/indiepop-32-aac';
+    const TRACKLIST_KEY = 'resistor_tracklist';
+    const SETTINGS_KEY = 'resistor_settings';
+    const LYRICS_CACHE_KEY = 'resistor_lyrics_cache';
+    const MAX_TRACKS = 200;
+
+    // ─── DOM REFS ───
     const titleEl = document.getElementById('title');
     const artistEl = document.getElementById('artist');
     const playBtn = document.getElementById('playBtn');
     const statusEl = document.getElementById('status');
     const liveBadge = document.getElementById('liveBadge');
     const volumeSlider = document.getElementById('volumeSlider');
-    let isPlaying = false, audio = null, metadataTimer = null, reconnectAttempts = 0;
-    const MAX_RECONNECT = 3;
-    // ─── LYRICS UI ───
+    const nowPlaying = document.getElementById('nowPlaying');
+    const tracklistToggle = document.getElementById('tracklistToggle');
+    const tracklistHeader = document.getElementById('tracklistHeader');
+    const tracklistItems = document.getElementById('tracklistItems');
+    const trackCount = document.getElementById('trackCount');
+    const tracklistArrow = document.getElementById('tracklistArrow');
+    const settingsToggle = document.getElementById('settingsToggle');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const bufferSize = document.getElementById('bufferSize');
+    const bufferLabel = document.getElementById('bufferLabel');
+    const autoReconnectToggle = document.getElementById('autoReconnectToggle');
+    const eliseModeToggle = document.getElementById('eliseModeToggle');
     const showLyricsBtn = document.getElementById('showLyricsBtn');
     const closeLyrics = document.getElementById('closeLyrics');
     const lyricsPanel = document.getElementById('lyricsPanel');
     const lyricsContent = document.getElementById('lyricsContent');
+    const toggleDedicationBtn = document.getElementById('toggleDedicationBtn');
+    const dedicationContainer = document.getElementById('dedicationContainer');
+
+    // ─── STATE ───
+    let isPlaying = false;
+    let audio = null;
+    let metadataTimer = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT = 5;
+    let tracklist = [];
+    let isTracklistOpen = false;
+    let isEliseMode = false;
+
+    let settings = {
+      darkMode: true,
+      bufferSize: 30,
+      autoReconnect: true,
+      eliseMode: false
+    };
+
+    let lyricsCache = {};
+
+    // ─── HELPERS ───
+    function setStatus(text, type = '') {
+      statusEl.textContent = text;
+      statusEl.className = 'status ' + type;
+    }
+
+    function updateUI(playing) {
+      if (playing) {
+        playBtn.textContent = '⏸';
+        playBtn.classList.add('playing');
+        liveBadge.textContent = '● Live';
+        liveBadge.style.color = '#4ecdc4';
+      } else {
+        playBtn.textContent = '▶';
+        playBtn.classList.remove('playing');
+        liveBadge.textContent = '○ Paused';
+        liveBadge.style.color = '#888';
+      }
+    }
+
+    // ─── COPY METADATA ───
+    function copyMetadata() {
+      const title = titleEl.textContent;
+      const artist = artistEl.textContent;
+      const text = `${title} — ${artist}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          setStatus('📋 Copied!', '');
+          setTimeout(() => setStatus('🎵 Now playing', 'playing'), 2000);
+        }).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+    nowPlaying.addEventListener('click', copyMetadata);
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setStatus('📋 Copied!', '');
+      setTimeout(() => setStatus('🎵 Now playing', 'playing'), 2000);
+    }
+
+    // ─── TRACKLIST ───
+    function loadTracklist() {
+      const stored = localStorage.getItem(TRACKLIST_KEY);
+      if (stored) tracklist = JSON.parse(stored);
+      renderTracklist();
+    }
+
+    function saveTracklist() {
+      localStorage.setItem(TRACKLIST_KEY, JSON.stringify(tracklist));
+    }
+
+    function addTrack(title, artist) {
+      if (!title || !artist || title === 'Resistor') return;
+      const existing = tracklist.find(t => t.title === title && t.artist === artist);
+      if (existing) {
+        existing.count += 1;
+        existing.playedAt = new Date().toISOString();
+      } else {
+        tracklist.unshift({
+          id: Date.now().toString(),
+          title,
+          artist,
+          playedAt: new Date().toISOString(),
+          count: 1
+        });
+      }
+      if (tracklist.length > MAX_TRACKS) tracklist.pop();
+      saveTracklist();
+      renderTracklist();
+    }
+
+    function renderTracklist() {
+      trackCount.textContent = tracklist.length;
+      if (tracklist.length === 0) {
+        tracklistItems.innerHTML = '<div style="padding:8px 0;color:var(--muted);font-size:12px;">No tracks yet. Start listening!</div>';
+        return;
+      }
+      let html = '';
+      tracklist.forEach(t => {
+        html += `
+              <div class="track-item">
+                <span>${t.artist} — ${t.title}</span>
+                <span class="count">${t.count}x</span>
+              </div>
+            `;
+      });
+      tracklistItems.innerHTML = html;
+    }
+
+    function toggleTracklist() {
+      isTracklistOpen = !isTracklistOpen;
+      tracklistItems.classList.toggle('open', isTracklistOpen);
+      tracklistArrow.classList.toggle('open', isTracklistOpen);
+    }
+    tracklistHeader.addEventListener('click', toggleTracklist);
+    tracklistToggle.addEventListener('click', toggleTracklist);
+
+    // ─── SETTINGS ───
+    function loadSettings() {
+      const stored = localStorage.getItem(SETTINGS_KEY);
+      if (stored) {
+        settings = JSON.parse(stored);
+        applySettings();
+      }
+    }
+
+    function saveSettings() {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    }
+
+    function applySettings() {
+      // Dark mode
+      if (settings.darkMode) {
+        document.documentElement.removeAttribute('data-theme');
+        darkModeToggle.checked = true;
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        darkModeToggle.checked = false;
+      }
+      // Buffer
+      bufferSize.value = settings.bufferSize;
+      bufferLabel.textContent = settings.bufferSize + 's';
+      // Auto-reconnect
+      autoReconnectToggle.checked = settings.autoReconnect;
+      // Elise Mode
+      eliseModeToggle.checked = settings.eliseMode;
+      if (settings.eliseMode) {
+        enableEliseMode();
+      } else {
+        disableEliseMode();
+      }
+    }
+
+    function openSettings() {
+      settingsModal.classList.add('open');
+    }
+
+    function closeSettingsModal() {
+      settingsModal.classList.remove('open');
+    }
+    settingsToggle.addEventListener('click', openSettings);
+    closeSettings.addEventListener('click', closeSettingsModal);
+    settingsModal.addEventListener('click', (e) => {
+      if (e.target === settingsModal) closeSettingsModal();
+    });
+
+    // Settings events
+    darkModeToggle.addEventListener('change', () => {
+      settings.darkMode = darkModeToggle.checked;
+      applySettings();
+      saveSettings();
+    });
+    bufferSize.addEventListener('input', () => {
+      settings.bufferSize = parseInt(bufferSize.value);
+      bufferLabel.textContent = settings.bufferSize + 's';
+      saveSettings();
+    });
+    autoReconnectToggle.addEventListener('change', () => {
+      settings.autoReconnect = autoReconnectToggle.checked;
+      saveSettings();
+    });
+    eliseModeToggle.addEventListener('change', () => {
+      settings.eliseMode = eliseModeToggle.checked;
+      saveSettings();
+      if (settings.eliseMode) {
+        enableEliseMode();
+      } else {
+        disableEliseMode();
+      }
+    });
+
+    // ─── ELISE MODE (Dedication) ───
+    function enableEliseMode() {
+      isEliseMode = true;
+      dedicationContainer.innerHTML = `
+            <div class="dedication-badge">
+              ❤️ Listening for Elise
+            </div>
+          `;
+      toggleDedicationBtn.classList.add('active');
+      setStatus('❤️ Elise Mode — Dedicated', 'playing');
+    }
+
+    function disableEliseMode() {
+      isEliseMode = false;
+      dedicationContainer.innerHTML = '';
+      toggleDedicationBtn.classList.remove('active');
+      if (isPlaying) setStatus('🎵 Playing', 'playing');
+    }
+
+    toggleDedicationBtn.addEventListener('click', () => {
+      settings.eliseMode = !settings.eliseMode;
+      eliseModeToggle.checked = settings.eliseMode;
+      saveSettings();
+      if (settings.eliseMode) {
+        enableEliseMode();
+      } else {
+        disableEliseMode();
+      }
+    });
+
+    // ─── LYRICS ───
+    function loadLyricsCache() {
+      const stored = localStorage.getItem(LYRICS_CACHE_KEY);
+      if (stored) lyricsCache = JSON.parse(stored);
+    }
+
+    function saveLyricsCache() {
+      localStorage.setItem(LYRICS_CACHE_KEY, JSON.stringify(lyricsCache));
+    }
+
+    async function fetchLyrics(artist, title) {
+      const cacheKey = `${artist} - ${title}`;
+      if (lyricsCache[cacheKey]) return lyricsCache[cacheKey];
+
+      try {
+        const url =
+          `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          const lyrics = data.syncedLyrics || data.plainLyrics || null;
+          if (lyrics) {
+            lyricsCache[cacheKey] = lyrics;
+            saveLyricsCache();
+            return lyrics;
+          }
+        }
+        return null;
+      } catch (e) {
+        console.debug('Lyrics fetch error:', e.message);
+        return null;
+      }
+    }
 
     async function displayLyrics(artist, title) {
       lyricsContent.innerHTML = '<p style="color: var(--muted);">🔍 Searching...</p>';
@@ -162,28 +915,14 @@
     closeLyrics.addEventListener('click', () => {
       lyricsPanel.style.display = 'none';
     });
-    function setStatus(text, type = '') {
-      statusEl.textContent = text;
-      statusEl.className = 'status ' + type;
-    }
 
-    function updateUI(playing) {
-      if (playing) {
-        playBtn.textContent = '⏸';
-        playBtn.classList.add('playing');
-        liveBadge.textContent = '● Live';
-        liveBadge.style.color = '#4ecdc4';
-      } else {
-        playBtn.textContent = '▶';
-        playBtn.classList.remove('playing');
-        liveBadge.textContent = '○ Paused';
-        liveBadge.style.color = '#888';
-      }
-    }
-
+    // ─── METADATA ───
     async function fetchMetadata() {
       try {
-        const response = await fetch(STREAM_URL, { headers: { 'Icy-MetaData': '1' }, signal: AbortSignal.timeout(5000) });
+        const response = await fetch(STREAM_URL, {
+          headers: { 'Icy-MetaData': '1' },
+          signal: AbortSignal.timeout(5000)
+        });
         const reader = response.body.getReader();
         const { value } = await reader.read();
         const chunk = new TextDecoder().decode(value);
@@ -192,85 +931,171 @@
         if (match) {
           const full = match[1].trim();
           if (full && full !== '') {
+            let artist = 'SomaFM';
+            let title = full;
             if (full.includes(' - ')) {
               const parts = full.split(' - ', 2);
-              artistEl.textContent = parts[0].trim() || 'SomaFM';
-              titleEl.textContent = parts[1].trim() || '🎵 Resistor';
-            } else {
-              titleEl.textContent = full;
+              artist = parts[0].trim();
+              title = parts[1].trim();
             }
+            artistEl.textContent = artist;
+            titleEl.textContent = title;
             setStatus('🎵 Now playing', 'playing');
+            addTrack(title, artist);
           }
         }
-      } catch (e) { /* silent */ }
+      } catch (e) {
+        console.debug('Metadata fetch:', e.message);
+      }
     }
 
+    // ─── RECONNECT ───
+    function reconnect() {
+      if (!settings.autoReconnect) {
+        setStatus('❌ Auto-reconnect off. Tap play to retry.', 'error');
+        isPlaying = false;
+        updateUI(false);
+        return;
+      }
+      if (reconnectAttempts >= MAX_RECONNECT) {
+        setStatus('❌ Failed after 5 attempts. Tap play to retry.', 'error');
+        isPlaying = false;
+        updateUI(false);
+        return;
+      }
+      reconnectAttempts++;
+      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1), 30000);
+      setStatus(`🔄 Reconnecting (${reconnectAttempts}/${MAX_RECONNECT})...`, 'buffering');
+      setTimeout(() => {
+        if (audio && isPlaying) {
+          audio.load();
+          audio.play().then(() => {
+            reconnectAttempts = 0;
+            setStatus('🎵 Reconnected', 'playing');
+          }).catch(() => reconnect());
+        }
+      }, delay);
+    }
+
+    // ─── AUDIO ───
     function createAudio() {
-      if (audio) { audio.pause(); audio.src = ''; audio = null; }
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+        audio = null;
+      }
       audio = new Audio();
       audio.src = STREAM_URL;
       audio.crossOrigin = 'anonymous';
       audio.preload = 'metadata';
       audio.setAttribute('decoding', 'async');
       audio.volume = parseFloat(volumeSlider.value);
+
       audio.addEventListener('playing', () => {
-        isPlaying = true; updateUI(true); setStatus('🎵 Playing', 'playing'); reconnectAttempts = 0;
+        isPlaying = true;
+        updateUI(true);
+        setStatus('🎵 Playing', 'playing');
+        reconnectAttempts = 0;
         if (metadataTimer) clearInterval(metadataTimer);
         metadataTimer = setInterval(fetchMetadata, 8000);
         fetchMetadata();
-      });
-      audio.addEventListener('pause', () => {
-        isPlaying = false; updateUI(false); setStatus('⏸ Paused', '');
-        if (metadataTimer) { clearInterval(metadataTimer); metadataTimer = null; }
-      });
-      audio.addEventListener('waiting', () => setStatus('⏳ Buffering...', 'buffering'));
-      audio.addEventListener('stalled', () => setStatus('⏳ Loading...', 'buffering'));
-      audio.addEventListener('error', () => {
-        setStatus('❌ Connection error', 'error');
-        if (reconnectAttempts < MAX_RECONNECT) {
-          reconnectAttempts++;
-          setTimeout(() => {
-            if (audio && isPlaying) {
-              setStatus(`🔄 Reconnecting (${reconnectAttempts}/${MAX_RECONNECT})...`, 'buffering');
-              audio.load();
-              audio.play().catch(() => {});
-            }
-          }, 2000 * reconnectAttempts);
-        } else {
-          setStatus('❌ Failed to connect', 'error');
-          isPlaying = false; updateUI(false);
+        if (settings.eliseMode) {
+          setStatus('❤️ Elise Mode — Dedicated', 'playing');
         }
       });
-      audio.addEventListener('ended', () => { if (isPlaying) { audio.load(); audio.play().catch(() => {}); } });
+
+      audio.addEventListener('pause', () => {
+        isPlaying = false;
+        updateUI(false);
+        setStatus('⏸ Paused', '');
+        if (metadataTimer) {
+          clearInterval(metadataTimer);
+          metadataTimer = null;
+        }
+      });
+
+      audio.addEventListener('waiting', () => {
+        setStatus('⏳ Buffering...', 'buffering');
+      });
+
+      audio.addEventListener('stalled', () => {
+        if (isPlaying) {
+          setStatus('⚠️ Connection lost', 'buffering');
+          reconnect();
+        }
+      });
+
+      audio.addEventListener('error', () => {
+        if (isPlaying) {
+          reconnect();
+        } else {
+          setStatus('❌ Error', 'error');
+        }
+      });
+
+      audio.addEventListener('ended', () => {
+        if (isPlaying) {
+          reconnect();
+        }
+      });
+
       return audio;
     }
 
+    // ─── PLAYBACK ───
     function togglePlay() {
       if (!audio) audio = createAudio();
-      if (isPlaying) audio.pause();
-      else audio.play().catch(() => setStatus('⚠️ Play error', 'error'));
+      if (isPlaying) {
+        audio.pause();
+      } else {
+        reconnectAttempts = 0;
+        audio.play().catch(() => setStatus('⚠️ Play error', 'error'));
+      }
     }
+    playBtn.addEventListener('click', togglePlay);
 
-    volumeSlider.addEventListener('input', () => { if (audio) audio.volume = parseFloat(volumeSlider.value); });
+    // ─── VOLUME ───
+    volumeSlider.addEventListener('input', () => {
+      if (audio) audio.volume = parseFloat(volumeSlider.value);
+    });
 
+    // ─── MEDIA SESSION ───
     if ('mediaSession' in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({ title: 'Indie Pop', artist: 'SomaFM', album: 'Resistor Radio' });
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: 'Indie Pop',
+        artist: 'SomaFM',
+        album: 'Resistor Radio'
+      });
       navigator.mediaSession.setActionHandler('play', togglePlay);
       navigator.mediaSession.setActionHandler('pause', togglePlay);
     }
 
+    // ─── VISIBILITY ───
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden && audio && isPlaying) setStatus('🎵 Background', 'playing');
+      if (document.hidden && audio && isPlaying) {
+        setStatus('🎵 Background', 'playing');
+      } else if (!document.hidden && audio && isPlaying) {
+        setStatus('🎵 Playing', 'playing');
+      }
     });
 
+    // ─── KEYBOARD ───
     document.addEventListener('keydown', (e) => {
-      if (e.target.tagName !== 'INPUT' && e.code === 'Space') { e.preventDefault(); togglePlay(); }
+      if (e.target.tagName !== 'INPUT' && e.code === 'Space') {
+        e.preventDefault();
+        togglePlay();
+      }
     });
 
-    playBtn.addEventListener('click', togglePlay);
+    // ─── INIT ───
+    loadSettings();
+    loadTracklist();
+    loadLyricsCache();
     setStatus('🎵 Ready', '');
     updateUI(false);
     console.log('🎸 Resistor Radio');
+    console.log('❤️ For Elise — Dedicated');
   </script>
+
 </body>
 </html>
