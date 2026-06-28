@@ -525,7 +525,7 @@
 
   <script type="module">
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    //  RESISTOR RADIO — Using M3U Source
+    //  RESISTOR RADIO — Final with M3U & SVG Icons
     //  SomaFM Indie Pop · For Elise
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -538,7 +538,31 @@
     const SETTINGS_KEY = 'resistor_settings';
 
     // ─── DOM REFS ───
-    // ... (keep all your DOM refs from the previous version)
+    const titleEl = document.getElementById('title');
+    const artistEl = document.getElementById('artist');
+    const playBtn = document.getElementById('playBtn');
+    const statusEl = document.getElementById('status');
+    const liveBadge = document.getElementById('liveBadge');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const nowPlaying = document.getElementById('nowPlaying');
+    const tracklistToggle = document.getElementById('tracklistToggle');
+    const tracklistHeader = document.getElementById('tracklistHeader');
+    const tracklistItems = document.getElementById('tracklistItems');
+    const trackCount = document.getElementById('trackCount');
+    const tracklistArrow = document.getElementById('tracklistArrow');
+    const settingsToggle = document.getElementById('settingsToggle');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const bufferSize = document.getElementById('bufferSize');
+    const bufferLabel = document.getElementById('bufferLabel');
+    const autoReconnectToggle = document.getElementById('autoReconnectToggle');
+    const eliseModeToggle = document.getElementById('eliseModeToggle');
+    const showLyricsBtn = document.getElementById('showLyricsBtn');
+    const closeLyrics = document.getElementById('closeLyrics');
+    const lyricsPanel = document.getElementById('lyricsPanel');
+    const lyricsContent = document.getElementById('lyricsContent');
+    const toggleDedicationBtn = document.getElementById('toggleDedicationBtn');
 
     // ─── STATE ───
     let isPlaying = false;
@@ -558,108 +582,57 @@
     };
 
     // ─── HELPERS ───
-    // ... (keep all your helper functions: setStatus, updateUI, renderTracklist, etc.)
-
-    // ─── FETCH STREAM URL FROM M3U ───
-    async function fetchStreamUrl() {
-      try {
-        const response = await fetch(M3U_URL);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const text = await response.text();
-        // M3U files usually have the URL on the first line that's not a comment
-        const lines = text.split('\n');
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed && !trimmed.startsWith('#') && trimmed.startsWith('http')) {
-            return trimmed;
-          }
-        }
-        throw new Error('No valid URL found in M3U');
-      } catch (e) {
-        console.error('Failed to fetch M3U:', e.message);
-        // Fallback to known working URL
-        return 'https://ice5.somafm.com/indiepop-32-aac';
-      }
+    function setStatus(text, type = '') {
+      statusEl.textContent = text;
+      statusEl.className = 'status ' + type;
     }
 
-    // ─── AUDIO SETUP ───
-    async function setupAudio() {
-      if (audio) {
-        audio.pause();
-        audio.src = '';
-        audio = null;
-      }
-
-      // Fetch the current stream URL from M3U
-      const streamUrl = await fetchStreamUrl();
-      currentStreamUrl = streamUrl;
-      console.log(`📡 Using stream URL: ${streamUrl}`);
-
-      audio = new Audio();
-      audio.src = streamUrl;
-      audio.crossOrigin = 'anonymous';
-      audio.preload = 'metadata';
-      audio.setAttribute('decoding', 'async');
-      audio.volume = parseFloat(volumeSlider.value);
-
-      // ─── EVENT LISTENERS ───
-      audio.addEventListener('playing', () => {
-        isPlaying = true;
-        updateUI(true);
-        setStatus('🎵 Playing', 'playing');
-        if (metadataTimer) clearInterval(metadataTimer);
-        metadataTimer = setInterval(fetchMetadata, 10000);
-        fetchMetadata();
-      });
-
-      audio.addEventListener('pause', () => {
-        isPlaying = false;
-        updateUI(false);
-        setStatus('⏸ Paused', '');
-        if (metadataTimer) { clearInterval(metadataTimer); metadataTimer = null; }
-      });
-
-      audio.addEventListener('error', (e) => {
-        console.error('Audio error:', e);
-        setStatus('❌ Stream error. Retrying...', 'error');
-        isPlaying = false;
-        updateUI(false);
-        // Optionally, retry with a new M3U fetch
-        setTimeout(() => {
-          if (audio) {
-            setupAudio().then(() => {
-              if (isPlaying) audio.play();
-            });
-          }
-        }, 5000);
-      });
-
-      // ─── VOLUME ───
-      volumeSlider.addEventListener('input', () => { if (audio) audio.volume = parseFloat(volumeSlider.value); });
-
-      return audio;
-    }
-
-    // ─── PLAYBACK ───
-    async function togglePlay() {
-      if (!audio) {
-        await setupAudio();
-      }
-      if (isPlaying) {
-        audio.pause();
+    function updateUI(playing) {
+      const playIcon = playBtn.querySelector('use');
+      if (playing) {
+        playIcon.setAttribute('href', 'src/icons/icons.svg#pause-icon');
+        playBtn.classList.add('playing');
+        liveBadge.textContent = '● Live';
+        liveBadge.style.color = '#4ecdc4';
       } else {
-        try {
-          await audio.play();
-        } catch (e) {
-          console.error('Play error:', e);
-          // If play fails, re-setup audio and try again
-          await setupAudio();
-          try {
-            await audio.play();
-          } catch (retryError) {
-            setStatus('⚠️ Play error', 'error');
-          }
-        }
+        playIcon.setAttribute('href', 'src/icons/icons.svg#play-icon');
+        playBtn.classList.remove('playing');
+        liveBadge.textContent = '○ Paused';
+        liveBadge.style.color = '#888';
+      }
+    }
+
+    // ─── RENDER TRACKLIST ───
+    function renderTracklist() {
+      trackCount.textContent = tracklist.length;
+      if (tracklist.length === 0) {
+        tracklistItems.innerHTML = '<div style="padding:8px 0;color:var(--muted);font-size:12px;">No tracks yet.</div>';
+        return;
+      }
+      let html = '';
+      tracklist.forEach(t => {
+        html += `<div class="track-item"><span>${t.artist} — ${t.title}</span><span class="count">${t.count}x</span></div>`;
+      });
+      tracklistItems.innerHTML = html;
+    }
+
+    // ─── UPDATE NOW PLAYING ───
+    function updateNowPlaying(artist, title) {
+      if (!artist || !title) return;
+      if (currentSong.artist === artist && currentSong.title === title) return;
+
+      currentSong.artist = artist;
+      currentSong.title = title;
+      artistEl.textContent = artist;
+      titleEl.textContent = title;
+      setStatus('🎵 Now playing', 'playing');
+
+      tracklist = addTrack(tracklist, title, artist);
+      saveTracklist(tracklist);
+      renderTracklist();
+
+      if (isEliseMode) {
+        displayLyrics(artist, title);
       }
     }
 
@@ -704,26 +677,6 @@
       }
     }
 
-    // ─── UPDATE NOW PLAYING ───
-    function updateNowPlaying(artist, title) {
-      if (!artist || !title) return;
-      if (currentSong.artist === artist && currentSong.title === title) return;
-
-      currentSong.artist = artist;
-      currentSong.title = title;
-      artistEl.textContent = artist;
-      titleEl.textContent = title;
-      setStatus('🎵 Now playing', 'playing');
-
-      tracklist = addTrack(tracklist, title, artist);
-      saveTracklist(tracklist);
-      renderTracklist();
-
-      if (isEliseMode) {
-        displayLyrics(artist, title);
-      }
-    }
-
     // ─── LYRICS DISPLAY ───
     async function displayLyrics(artist, title) {
       lyricsPanel.style.display = 'block';
@@ -742,11 +695,226 @@
       }
     }
 
-    // ─── INIT ───
-    // ... (keep the rest of your init code, settings, tracklist toggle, etc.)
-    // But replace the old togglePlay with the async version above.
+    // ─── FETCH STREAM URL FROM M3U ───
+    async function fetchStreamUrl() {
+      try {
+        const response = await fetch(M3U_URL);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const text = await response.text();
+        const lines = text.split('\n');
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed && !trimmed.startsWith('#') && trimmed.startsWith('http')) {
+            return trimmed;
+          }
+        }
+        throw new Error('No valid URL found in M3U');
+      } catch (e) {
+        console.error('Failed to fetch M3U:', e.message);
+        return 'https://ice5.somafm.com/indiepop-32-aac';
+      }
+    }
 
-    // ─── SETUP ───
+    // ─── AUDIO SETUP ───
+    async function setupAudio() {
+      if (audio) {
+        audio.pause();
+        audio.src = '';
+        audio = null;
+      }
+
+      const streamUrl = await fetchStreamUrl();
+      currentStreamUrl = streamUrl;
+      console.log(`📡 Using stream URL: ${streamUrl}`);
+
+      audio = new Audio();
+      audio.src = streamUrl;
+      audio.crossOrigin = 'anonymous';
+      audio.preload = 'metadata';
+      audio.setAttribute('decoding', 'async');
+      audio.volume = parseFloat(volumeSlider.value);
+
+      audio.addEventListener('playing', () => {
+        isPlaying = true;
+        updateUI(true);
+        setStatus('🎵 Playing', 'playing');
+        if (metadataTimer) clearInterval(metadataTimer);
+        metadataTimer = setInterval(fetchMetadata, 10000);
+        fetchMetadata();
+      });
+
+      audio.addEventListener('pause', () => {
+        isPlaying = false;
+        updateUI(false);
+        setStatus('⏸ Paused', '');
+        if (metadataTimer) { clearInterval(metadataTimer); metadataTimer = null; }
+      });
+
+      audio.addEventListener('error', (e) => {
+        console.error('Audio error:', e);
+        setStatus('❌ Stream error. Retrying...', 'error');
+        isPlaying = false;
+        updateUI(false);
+        setTimeout(() => {
+          if (audio) {
+            setupAudio().then(() => {
+              if (isPlaying) audio.play();
+            });
+          }
+        }, 5000);
+      });
+
+      return audio;
+    }
+
+    // ─── PLAYBACK ───
+    async function togglePlay() {
+      if (!audio) {
+        await setupAudio();
+      }
+      if (isPlaying) {
+        audio.pause();
+      } else {
+        try {
+          await audio.play();
+        } catch (e) {
+          console.error('Play error:', e);
+          await setupAudio();
+          try {
+            await audio.play();
+          } catch (retryError) {
+            setStatus('⚠️ Play error', 'error');
+          }
+        }
+      }
+    }
+
+    // ─── VOLUME ───
+    volumeSlider.addEventListener('input', () => { if (audio) audio.volume = parseFloat(volumeSlider.value); });
+
+    // ─── TRACKLIST TOGGLE ───
+    function toggleTracklist() {
+      isTracklistOpen = !isTracklistOpen;
+      tracklistItems.classList.toggle('open', isTracklistOpen);
+      tracklistArrow.classList.toggle('open', isTracklistOpen);
+    }
+    tracklistHeader.addEventListener('click', toggleTracklist);
+    tracklistToggle.addEventListener('click', toggleTracklist);
+
+    // ─── LYRICS BUTTON ───
+    showLyricsBtn.addEventListener('click', () => {
+      const artist = artistEl.textContent;
+      const title = titleEl.textContent;
+      if (artist && title && artist !== 'SomaFM' && title !== 'Resistor') {
+        displayLyrics(artist, title);
+      } else {
+        lyricsContent.innerHTML = '🎵 Play a track first.';
+        lyricsPanel.style.display = 'block';
+      }
+    });
+    closeLyrics.addEventListener('click', () => { lyricsPanel.style.display = 'none'; });
+
+    // ─── COPY METADATA ───
+    function copyMetadata() {
+      const title = titleEl.textContent;
+      const artist = artistEl.textContent;
+      const text = `${title} — ${artist}`;
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          setStatus('📋 Copied!', '');
+          setTimeout(() => setStatus('🎵 Now playing', 'playing'), 2000);
+        }).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+    nowPlaying.addEventListener('click', copyMetadata);
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setStatus('📋 Copied!', '');
+      setTimeout(() => setStatus('🎵 Now playing', 'playing'), 2000);
+    }
+
+    // ─── SETTINGS ───
+    function loadSettings() {
+      const stored = localStorage.getItem(SETTINGS_KEY);
+      if (stored) { settings = JSON.parse(stored); applySettings(); }
+    }
+
+    function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+
+    function applySettings() {
+      if (settings.darkMode) {
+        document.documentElement.removeAttribute('data-theme');
+        darkModeToggle.checked = true;
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        darkModeToggle.checked = false;
+      }
+      bufferSize.value = settings.bufferSize;
+      bufferLabel.textContent = settings.bufferSize + 's';
+      autoReconnectToggle.checked = settings.autoReconnect;
+      eliseModeToggle.checked = settings.eliseMode;
+      isEliseMode = settings.eliseMode;
+    }
+
+    function openSettings() { settingsModal.classList.add('open'); }
+    function closeSettingsModal() { settingsModal.classList.remove('open'); }
+    settingsToggle.addEventListener('click', openSettings);
+    closeSettings.addEventListener('click', closeSettingsModal);
+    settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettingsModal(); });
+
+    darkModeToggle.addEventListener('change', () => { settings.darkMode = darkModeToggle.checked; applySettings(); saveSettings(); });
+    bufferSize.addEventListener('input', () => { settings.bufferSize = parseInt(bufferSize.value); bufferLabel.textContent = settings.bufferSize + 's'; saveSettings(); });
+    autoReconnectToggle.addEventListener('change', () => { settings.autoReconnect = autoReconnectToggle.checked; saveSettings(); });
+    eliseModeToggle.addEventListener('change', () => {
+      settings.eliseMode = eliseModeToggle.checked;
+      isEliseMode = settings.eliseMode;
+      saveSettings();
+    });
+
+    // ─── ELISE MODE ───
+    toggleDedicationBtn.addEventListener('click', () => {
+      settings.eliseMode = !settings.eliseMode;
+      eliseModeToggle.checked = settings.eliseMode;
+      isEliseMode = settings.eliseMode;
+      saveSettings();
+      toggleDedicationBtn.classList.toggle('active', isEliseMode);
+      if (isEliseMode) {
+        setStatus('❤️ Elise Mode', 'playing');
+      } else {
+        setStatus('🎵 Playing', 'playing');
+      }
+    });
+
+    // ─── MEDIA SESSION ───
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: 'Indie Pop', artist: 'SomaFM', album: 'Resistor Radio' });
+      navigator.mediaSession.setActionHandler('play', togglePlay);
+      navigator.mediaSession.setActionHandler('pause', togglePlay);
+    }
+
+    // ─── VISIBILITY ───
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && audio && isPlaying) {
+        setStatus('🎵 Background', 'playing');
+      } else if (!document.hidden && audio && isPlaying) {
+        setStatus(isEliseMode ? '❤️ Elise Mode' : '🎵 Playing', 'playing');
+      }
+    });
+
+    // ─── KEYBOARD ───
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName !== 'INPUT' && e.code === 'Space') { e.preventDefault(); togglePlay(); }
+    });
+
+    // ─── INIT ───
     loadSettings();
     tracklist = loadTracklist();
     loadLyricsCache();
@@ -755,9 +923,8 @@
     updateUI(false);
     console.log('🎸 Resistor Radio — For Elise');
 
-    // ─── EVENT BINDING ───
+    // ─── EVENT BINDINGS ───
     playBtn.addEventListener('click', togglePlay);
-    // ... (keep all other event bindings)
   </script>
 </body>
 </html>
