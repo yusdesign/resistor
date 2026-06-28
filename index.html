@@ -525,7 +525,7 @@
 
   <script type="module">
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    //  RESISTOR RADIO — Final with M3U & SVG Icons
+    //  RESISTOR RADIO — PLS with Multiple Fallbacks
     //  SomaFM Indie Pop · For Elise
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -534,7 +534,7 @@
     import { loadLyricsCache, saveLyricsCache, fetchLyrics } from './src/lyrics.js';
 
     // ─── CONFIG ───
-    const M3U_URL = 'https://somafm.com/m3u/indiepop32.m3u';
+    const PLS_URL = 'https://somafm.com/indiepop32.pls';
     const SETTINGS_KEY = 'resistor_settings';
 
     // ─── DOM REFS ───
@@ -572,7 +572,8 @@
     let isEliseMode = false;
     let tracklist = [];
     let currentSong = { artist: '', title: '' };
-    let currentStreamUrl = '';
+    let streamUrls = [];
+    let currentStreamIndex = 0;
 
     let settings = {
       darkMode: true,
@@ -651,9 +652,10 @@
           }
         }
 
-        // Fallback: ICY metadata
-        if (currentStreamUrl) {
-          const icyResponse = await fetch(currentStreamUrl, {
+        // Fallback: ICY metadata from current stream
+        if (streamUrls.length > 0 && currentStreamIndex < streamUrls.length) {
+          const currentUrl = streamUrls[currentStreamIndex];
+          const icyResponse = await fetch(currentUrl, {
             headers: { 'Icy-MetaData': '1' },
             signal: AbortSignal.timeout(5000)
           });
@@ -695,23 +697,32 @@
       }
     }
 
-    // ─── FETCH STREAM URL FROM M3U ───
-    async function fetchStreamUrl() {
+    // ─── FETCH STREAM URLS FROM PLS ───
+    async function fetchStreamUrls() {
       try {
-        const response = await fetch(M3U_URL);
+        const response = await fetch(PLS_URL);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const text = await response.text();
         const lines = text.split('\n');
+        const urls = [];
         for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed && !trimmed.startsWith('#') && trimmed.startsWith('http')) {
-            return trimmed;
+          if (line.startsWith('File')) {
+            const url = line.split('=')[1]?.trim();
+            if (url && url.startsWith('https://')) {
+              urls.push(url);
+            }
           }
         }
-        throw new Error('No valid URL found in M3U');
+        if (urls.length === 0) throw new Error('No valid HTTPS URLs found in PLS');
+        return urls;
       } catch (e) {
-        console.error('Failed to fetch M3U:', e.message);
-        return 'https://ice5.somafm.com/indiepop-32-aac';
+        console.error('Failed to fetch PLS:', e.message);
+        // Fallback to known working HTTPS URLs
+        return [
+          'https://ice2.somafm.com/indiepop-32-aac',
+          'https://ice4.somafm.com/indiepop-32-aac',
+          'https://ice6.somafm.com/indiepop-32-aac'
+        ];
       }
     }
 
@@ -723,17 +734,41 @@
         audio = null;
       }
 
-      const streamUrl = await fetchStreamUrl();
-      currentStreamUrl = streamUrl;
-      console.log(`📡 Using stream URL: ${streamUrl}`);
+      if (streamUrls.length === 0) {
+        streamUrls = await fetchStreamUrls();
+        currentStreamIndex = 0;
+      }
 
-      audio = new Audio();
-      audio.src = streamUrl;
-      audio.crossOrigin = 'anonymous';
-      audio.preload = 'metadata';
-      audio.setAttribute('decoding', 'async');
-      audio.volume = parseFloat(volumeSlider.value);
+      // Try the current stream, fallback to next if it fails
+      let success = false;
+      for (let i = currentStreamIndex; i < streamUrls.length; i++) {
+        try {
+          const url = streamUrls[i];
+          console.log(`📡 Trying stream ${i+1}/${streamUrls.length}: ${url}`);
+          audio = new Audio();
+          audio.src = url;
+          audio.crossOrigin = 'anonymous';
+          audio.preload = 'metadata';
+          audio.setAttribute('decoding', 'async');
+          audio.volume = parseFloat(volumeSlider.value);
 
+          // Test if the stream is playable
+          await audio.play();
+          currentStreamIndex = i;
+          success = true;
+          break;
+        } catch (e) {
+          console.warn(`Stream ${i+1} failed:`, e.message);
+          continue;
+        }
+      }
+
+      if (!success) {
+        setStatus('❌ All streams failed', 'error');
+        return null;
+      }
+
+      // ─── EVENT LISTENERS ───
       audio.addEventListener('playing', () => {
         isPlaying = true;
         updateUI(true);
@@ -752,16 +787,22 @@
 
       audio.addEventListener('error', (e) => {
         console.error('Audio error:', e);
-        setStatus('❌ Stream error. Retrying...', 'error');
+        setStatus('❌ Stream error. Trying next...', 'error');
         isPlaying = false;
         updateUI(false);
-        setTimeout(() => {
-          if (audio) {
-            setupAudio().then(() => {
-              if (isPlaying) audio.play();
-            });
-          }
-        }, 5000);
+        // Try the next stream in the list
+        if (currentStreamIndex < streamUrls.length - 1) {
+          currentStreamIndex++;
+          setTimeout(() => {
+            if (audio) {
+              setupAudio().then(() => {
+                if (isPlaying) audio.play();
+              });
+            }
+          }, 3000);
+        } else {
+          setStatus('❌ All streams exhausted', 'error');
+        }
       });
 
       return audio;
@@ -769,8 +810,9 @@
 
     // ─── PLAYBACK ───
     async function togglePlay() {
-      if (!audio) {
+      if (!audio || audio.src === '') {
         await setupAudio();
+        if (!audio) return;
       }
       if (isPlaying) {
         audio.pause();
@@ -779,11 +821,14 @@
           await audio.play();
         } catch (e) {
           console.error('Play error:', e);
+          // Re-setup audio and try again
           await setupAudio();
-          try {
-            await audio.play();
-          } catch (retryError) {
-            setStatus('⚠️ Play error', 'error');
+          if (audio) {
+            try {
+              await audio.play();
+            } catch (retryError) {
+              setStatus('⚠️ Play error', 'error');
+            }
           }
         }
       }
@@ -925,6 +970,12 @@
 
     // ─── EVENT BINDINGS ───
     playBtn.addEventListener('click', togglePlay);
+
+    // Pre-fetch stream URLs
+    fetchStreamUrls().then(urls => {
+      streamUrls = urls;
+      console.log(`📡 Found ${urls.length} streams`);
+    });
   </script>
 </body>
 </html>

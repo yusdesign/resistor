@@ -20,17 +20,17 @@
     <path id="rect9" style="fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-miterlimit:0" d="M 21,11 C 21,7.1220001 17.878,4 13.999999,4 H 10" />
   </symbol>
   <symbol id="close-icon" viewBox="0 0 24 24">
-    <rect x="2.9091" y="2.9091" width="18.182" height="18.182" rx="1.0909" ry="1.0909" style="fill:none;stroke:currentColor;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2"/>
+    <rect x="2.9091" y="2.9091" width="18.182" height="18.182" rx="1.0909" ry="1.0909" style="fill:none;stroke:var(--text);stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2"/>
     <path d="m8 8 8 8" style="fill:none;stroke:var(--text);stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2"/>
     <path d="m16 8-8 8" style="fill:none;stroke:var(--text);stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2"/>
   </symbol>
   <symbol id="pause-icon" viewBox="0 0 24 24">
-    <rect x="2.9091" y="2.9091" width="18.182" height="18.182" rx="1.0909" ry="1.0909" style="fill:none;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2;stroke:#000" id="rect1" />
+    <rect x="2.9091" y="2.9091" width="18.182" height="18.182" rx="1.0909" ry="1.0909" style="fill:none;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2;stroke:var(--text)" id="rect1" />
     <path d="M 10.041646,8.0000997 V 16.0001 Z" style="fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0" id="path1" />
     <path d="M 14.081264,8.0000997 V 16.0001 Z" style="fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0" id="path2" />
   </symbol>
   <symbol id="play-icon" viewBox="0 0 24 24">
-    <rect x="2.9091" y="2.9091" width="18.182" height="18.182" rx="1.0909" ry="1.0909" style="fill:none;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2;stroke:#000" id="rect1" />
+    <rect x="2.9091" y="2.9091" width="18.182" height="18.182" rx="1.0909" ry="1.0909" style="fill:none;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2;stroke:var(--text)" id="rect1" />
     <path d="m 9.2920256,8.0000997 6.2905054,4.0000003 -6.2905054,4 z" style="fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0" id="path1" />
   </symbol>
   <symbol id="microdd-icon" viewBox="0 0 24 24">
@@ -38,20 +38,17 @@
     <path d="m 17,9 -5,5.9999 z" style="fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0" id="path2" />
   </symbol>
   <symbol id="lyrics-icon" viewBox="0 0 24 24">
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-opacity:1" d="m 6,5 c 0,0 1.5,1 1.5,3 0,3 -2,4.636363 -2,7 0,3 2.5,5 6.5,5 4,0 6.5,-2 6.5,-5 0,-2.363637 -2,-4 -2,-7 0,-2 1.5,-3 1.5,-3" id="path3" />
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 10,21 V 5" id="path4" />
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 12,21 V 4" id="path5" />
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 14,21 V 5" id="path6" />
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 6,8 H 18" id="path7" />
+    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:0;stroke-opacity:1" d="m 6,6 1,3 c 0,0 -1,2 -1,4 0,3 2,4 6,4 4,0 6,-1 6,-4 0,-2 -1,-4 -1,-4 l 1,-3" id="path3" />
+    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:butt;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 9.5,19 V 5" id="path4" />
+    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:butt;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 12,20 V 4" id="path5" />
+    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:butt;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 14.5,19 V 5" id="path6" />
+    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:butt;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 5.0576687,9 H 19" id="path7" />
   </symbol>
   <symbol id="tracklist-icon" viewBox="0 0 24 24">
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1;stroke-linejoin:round" d="m 10,17 h 7" id="path7" />
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1;stroke-linejoin:round" d="m 10,9 h 7" id="path8" />
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1;stroke-linejoin:round" d="m 10,13 h 7" id="path9" />
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 8,19 V 7" id="path13" />
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 20,15 H 4" id="path14" />
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="m 4,19.5 v -15 h 16 v 15 z" id="path15" />
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 20,11 H 4" id="path18" />
-    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 20,7 H 4" id="path19" />
+    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 9,19 V 5" id="path13" />
+    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 19,15 H 5" id="path14" />
+    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 5,17 5,7 A 2,2 135 0 1 7,5 l 10,0 a 2,2 45 0 1 2,2 l 0,10 a 2,2 135 0 1 -2,2 L 7,19 A 2,2 45 0 1 5,17 Z" id="path15" />
+    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 19,11.5 H 5" id="path18" />
+    <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 19,8 H 5" id="path19" />
   </symbol>
 </svg>
