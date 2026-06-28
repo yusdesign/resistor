@@ -554,7 +554,7 @@
 
   <script type="module">
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    //  RESISTOR RADIO — PLS with Multiple Fallbacks
+    //  RESISTOR RADIO — Fully Working UI
     //  SomaFM Indie Pop · For Elise
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -924,6 +924,7 @@
     function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
 
     function applySettings() {
+      // Dark Mode
       if (settings.darkMode) {
         document.documentElement.removeAttribute('data-theme');
         darkModeToggle.checked = true;
@@ -931,11 +932,21 @@
         document.documentElement.setAttribute('data-theme', 'light');
         darkModeToggle.checked = false;
       }
+      // Buffer Size
       bufferSize.value = settings.bufferSize;
       bufferLabel.textContent = settings.bufferSize + 's';
+      // Auto Reconnect
       autoReconnectToggle.checked = settings.autoReconnect;
+      // Elise Mode
       eliseModeToggle.checked = settings.eliseMode;
       isEliseMode = settings.eliseMode;
+      if (isEliseMode) {
+        toggleDedicationBtn.classList.add('active');
+        setStatus('❤️ Elise Mode', 'playing');
+      } else {
+        toggleDedicationBtn.classList.remove('active');
+        setStatus('🎵 Playing', 'playing');
+      }
     }
 
     function openSettings() { settingsModal.classList.add('open'); }
@@ -950,21 +961,17 @@
     eliseModeToggle.addEventListener('change', () => {
       settings.eliseMode = eliseModeToggle.checked;
       isEliseMode = settings.eliseMode;
+      applySettings();
       saveSettings();
     });
 
-    // ─── ELISE MODE ───
+    // ─── ELISE MODE BUTTON ───
     toggleDedicationBtn.addEventListener('click', () => {
       settings.eliseMode = !settings.eliseMode;
       eliseModeToggle.checked = settings.eliseMode;
       isEliseMode = settings.eliseMode;
+      applySettings();
       saveSettings();
-      toggleDedicationBtn.classList.toggle('active', isEliseMode);
-      if (isEliseMode) {
-        setStatus('Dedicated Mode', 'playing');
-      } else {
-        setStatus('🎵 Playing', 'playing');
-      }
     });
 
     // ─── MEDIA SESSION ───
@@ -979,7 +986,7 @@
       if (document.hidden && audio && isPlaying) {
         setStatus('🎵 Background', 'playing');
       } else if (!document.hidden && audio && isPlaying) {
-        setStatus(isEliseMode ? 'Dedicated' : '🎵 Playing', 'playing');
+        setStatus(isEliseMode ? '❤️ Elise Mode' : '🎵 Playing', 'playing');
       }
     });
 
