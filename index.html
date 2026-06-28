@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Resistor · Верста</title>
+  <title>Resistor · Резистор</title>
   <style>
     /* ─── RESET & ROOT ─── */
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -416,12 +416,12 @@
       <div class="header-actions">
         <button class="icon-btn" id="tracklistToggle" title="Tracklist" aria-label="Toggle tracklist">
           <svg viewBox="0 0 24 24">
-            <use href="src/icons/icons.svg#tracklist-icon" />
+            <use href="/icons.svg#tracklist-icon" />
           </svg>
         </button>
         <button class="icon-btn" id="settingsToggle" title="Settings" aria-label="Open settings">
           <svg viewBox="0 0 24 24">
-            <use href="src/icons/icons.svg#documentation-icon" />
+            <use href="/icons.svg#documentation-icon" />
           </svg>
         </button>
       </div>
@@ -439,7 +439,7 @@
     <!-- ─── PLAY BUTTON ─── -->
     <button class="play-btn" id="playBtn" aria-label="Play / Pause">
       <svg viewBox="0 0 24 24">
-        <use href="src/icons/icons.svg#play-icon" />
+        <use href="/icons.svg#play-icon" />
       </svg>
     </button>
 
@@ -447,12 +447,12 @@
     <div class="controls-bar">
       <button class="icon-btn" id="showLyricsBtn" title="Show Lyrics" aria-label="Show lyrics">
         <svg viewBox="0 0 24 24">
-          <use href="src/icons/icons.svg#lyrics-icon" />
+          <use href="/icons.svg#lyrics-icon" />
         </svg>
       </button>
       <button class="icon-btn" id="toggleDedicationBtn" title="Elise Mode" aria-label="Toggle Elise Mode">
         <svg viewBox="0 0 24 24">
-          <use href="src/icons/icons.svg#social-icon" />
+          <use href="/icons.svg#social-icon" />
         </svg>
       </button>
     </div>
@@ -479,7 +479,7 @@
         <span>📜 Lyrics</span>
         <button class="icon-btn" id="closeLyrics" aria-label="Close lyrics">
           <svg viewBox="0 0 24 24" style="width:20px;height:20px;">
-            <use href="src/icons/icons.svg#close-icon" />
+            <use href="/icons.svg#close-icon" />
           </svg>
         </button>
       </div>
@@ -591,12 +591,12 @@
     function updateUI(playing) {
       const playIcon = playBtn.querySelector('use');
       if (playing) {
-        playIcon.setAttribute('href', 'src/icons/icons.svg#pause-icon');
+        playIcon.setAttribute('href', '/icons.svg#pause-icon');
         playBtn.classList.add('playing');
         liveBadge.textContent = '● Live';
         liveBadge.style.color = '#4ecdc4';
       } else {
-        playIcon.setAttribute('href', 'src/icons/icons.svg#play-icon');
+        playIcon.setAttribute('href', '/icons.svg#play-icon');
         playBtn.classList.remove('playing');
         liveBadge.textContent = '○ Paused';
         liveBadge.style.color = '#888';
@@ -932,7 +932,7 @@
       saveSettings();
       toggleDedicationBtn.classList.toggle('active', isEliseMode);
       if (isEliseMode) {
-        setStatus('❤️ Elise Mode', 'playing');
+        setStatus('Dedicated Mode', 'playing');
       } else {
         setStatus('🎵 Playing', 'playing');
       }
@@ -950,7 +950,7 @@
       if (document.hidden && audio && isPlaying) {
         setStatus('🎵 Background', 'playing');
       } else if (!document.hidden && audio && isPlaying) {
-        setStatus(isEliseMode ? '❤️ Elise Mode' : '🎵 Playing', 'playing');
+        setStatus(isEliseMode ? 'Dedicated' : '🎵 Playing', 'playing');
       }
     });
 
@@ -966,7 +966,7 @@
     renderTracklist();
     setStatus('🎵 Ready', '');
     updateUI(false);
-    console.log('🎸 Resistor Radio — For Elise');
+    console.log('🎸 Resistor, Indie Radio App');
 
     // ─── EVENT BINDINGS ───
     playBtn.addEventListener('click', togglePlay);
