@@ -129,10 +129,6 @@
     }
     .control-btn:hover { opacity: 0.9; }
     .control-btn:active { transform: scale(0.9); }
-    .control-btn.active {
-      opacity: 1;
-      color: var(--playing);
-    }
     .play-btn {
       width: 72px;
       height: 72px;
@@ -229,7 +225,6 @@
       text-align: left;
       max-height: 250px;
       overflow-y: auto;
-      transition: all 0.3s ease;
     }
     .lyrics-panel .header {
       display: flex;
@@ -244,7 +239,6 @@
       line-height: 1.7;
       color: var(--text);
       white-space: pre-wrap;
-      font-family: var(--font);
     }
     .lyrics-panel .content .line {
       display: block;
@@ -286,7 +280,6 @@
       font-size: 13px;
       border-bottom: 1px solid var(--border);
       color: var(--muted);
-      transition: color 0.3s;
     }
     .tracklist-items .track-item .count {
       color: var(--accent);
@@ -458,17 +451,19 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    //  RESISTOR RADIO — Final
+    //  RESISTOR RADIO — Final with Modules
     //  SomaFM Indie Pop · For Elise
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+    // ─── IMPORTS ───
+    import { loadTracklist, saveTracklist, addTrack } from './src/tracklist.js';
+    import { loadLyricsCache, saveLyricsCache, fetchLyrics } from './src/lyrics.js';
+
     // ─── CONFIG ───
     const STREAM_URL = 'https://ice5.somafm.com/indiepop-32-aac';
-    const TRACKLIST_KEY = 'resistor_tracklist';
     const SETTINGS_KEY = 'resistor_settings';
-    const LYRICS_CACHE_KEY = 'resistor_lyrics_cache';
     const MAX_TRACKS = 200;
 
     // ─── DOM REFS ───
@@ -501,17 +496,17 @@
     let isPlaying = false;
     let audio = null;
     let metadataTimer = null;
-    let tracklist = [];
     let isTracklistOpen = false;
     let isEliseMode = false;
+    let tracklist = [];
+    let currentSong = { artist: '', title: '' };
+
     let settings = {
       darkMode: true,
       bufferSize: 30,
       autoReconnect: true,
       eliseMode: false
     };
-    let lyricsCache = {};
-    let currentSong = { artist: '', title: '' };
 
     // ─── HELPERS ───
     function setStatus(text, type = '') {
@@ -533,58 +528,7 @@
       }
     }
 
-    // ─── COPY ───
-    function copyMetadata() {
-      const title = titleEl.textContent;
-      const artist = artistEl.textContent;
-      const text = `${title} — ${artist}`;
-      if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(text).then(() => {
-          setStatus('📋 Copied!', '');
-          setTimeout(() => setStatus('🎵 Now playing', 'playing'), 2000);
-        }).catch(() => fallbackCopy(text));
-      } else {
-        fallbackCopy(text);
-      }
-    }
-    nowPlaying.addEventListener('click', copyMetadata);
-
-    function fallbackCopy(text) {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      setStatus('📋 Copied!', '');
-      setTimeout(() => setStatus('🎵 Now playing', 'playing'), 2000);
-    }
-
-    // ─── TRACKLIST ───
-    function loadTracklist() {
-      const stored = localStorage.getItem(TRACKLIST_KEY);
-      if (stored) tracklist = JSON.parse(stored);
-      renderTracklist();
-    }
-
-    function saveTracklist() {
-      localStorage.setItem(TRACKLIST_KEY, JSON.stringify(tracklist));
-    }
-
-    function addTrack(title, artist) {
-      if (!title || !artist || title === 'Resistor') return;
-      const existing = tracklist.find(t => t.title === title && t.artist === artist);
-      if (existing) {
-        existing.count += 1;
-        existing.playedAt = new Date().toISOString();
-      } else {
-        tracklist.unshift({ id: Date.now().toString(), title, artist, playedAt: new Date().toISOString(), count: 1 });
-      }
-      if (tracklist.length > MAX_TRACKS) tracklist.pop();
-      saveTracklist();
-      renderTracklist();
-    }
-
+    // ─── RENDER TRACKLIST ───
     function renderTracklist() {
       trackCount.textContent = tracklist.length;
       if (tracklist.length === 0) {
@@ -598,135 +542,83 @@
       tracklistItems.innerHTML = html;
     }
 
-    function toggleTracklist() {
-      isTracklistOpen = !isTracklistOpen;
-      tracklistItems.classList.toggle('open', isTracklistOpen);
-      tracklistArrow.classList.toggle('open', isTracklistOpen);
-    }
-    tracklistHeader.addEventListener('click', toggleTracklist);
-    tracklistToggle.addEventListener('click', toggleTracklist);
+    // ─── UPDATE NOW PLAYING ───
+    function updateNowPlaying(artist, title) {
+      if (!artist || !title) return;
+      if (currentSong.artist === artist && currentSong.title === title) return;
 
-    // ─── SETTINGS ───
-    function loadSettings() {
-      const stored = localStorage.getItem(SETTINGS_KEY);
-      if (stored) { settings = JSON.parse(stored); applySettings(); }
-    }
+      currentSong.artist = artist;
+      currentSong.title = title;
+      artistEl.textContent = artist;
+      titleEl.textContent = title;
+      setStatus('🎵 Now playing', 'playing');
 
-    function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+      // Add to tracklist using imported function
+      tracklist = addTrack(tracklist, title, artist);
+      saveTracklist(tracklist);
+      renderTracklist();
 
-    function applySettings() {
-      if (settings.darkMode) {
-        document.documentElement.removeAttribute('data-theme');
-        darkModeToggle.checked = true;
-      } else {
-        document.documentElement.setAttribute('data-theme', 'light');
-        darkModeToggle.checked = false;
-      }
-      bufferSize.value = settings.bufferSize;
-      bufferLabel.textContent = settings.bufferSize + 's';
-      autoReconnectToggle.checked = settings.autoReconnect;
-      eliseModeToggle.checked = settings.eliseMode;
-      isEliseMode = settings.eliseMode;
-    }
-
-    function openSettings() { settingsModal.classList.add('open'); }
-    function closeSettingsModal() { settingsModal.classList.remove('open'); }
-    settingsToggle.addEventListener('click', openSettings);
-    closeSettings.addEventListener('click', closeSettingsModal);
-    settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettingsModal(); });
-
-    darkModeToggle.addEventListener('change', () => { settings.darkMode = darkModeToggle.checked; applySettings(); saveSettings(); });
-    bufferSize.addEventListener('input', () => { settings.bufferSize = parseInt(bufferSize.value); bufferLabel.textContent = settings.bufferSize + 's'; saveSettings(); });
-    autoReconnectToggle.addEventListener('change', () => { settings.autoReconnect = autoReconnectToggle.checked; saveSettings(); });
-    eliseModeToggle.addEventListener('change', () => {
-      settings.eliseMode = eliseModeToggle.checked;
-      isEliseMode = settings.eliseMode;
-      saveSettings();
-    });
-
-    // ─── LYRICS ───
-    function loadLyricsCache() {
-      const stored = localStorage.getItem(LYRICS_CACHE_KEY);
-      if (stored) lyricsCache = JSON.parse(stored);
-    }
-
-    function saveLyricsCache() { localStorage.setItem(LYRICS_CACHE_KEY, JSON.stringify(lyricsCache)); }
-
-    async function fetchLyrics(artist, title) {
-      const cacheKey = `${artist} - ${title}`;
-      if (lyricsCache[cacheKey]) return lyricsCache[cacheKey];
-      try {
-        const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
-        const response = await fetch(url);
-        if (response.ok) {
-          const data = await response.json();
-          const lyrics = data.syncedLyrics || data.plainLyrics || null;
-          if (lyrics) { lyricsCache[cacheKey] = lyrics; saveLyricsCache(); return lyrics; }
-        }
-        return null;
-      } catch (e) { console.debug('Lyrics fetch error:', e.message); return null; }
-    }
-
-    async function displayLyrics(artist, title) {
-      lyricsContent.innerHTML = '<p style="color: var(--muted);">🔍 Searching...</p>';
-      lyricsPanel.style.display = 'block';
-      const lyrics = await fetchLyrics(artist, title);
-      if (lyrics) {
-        const lines = lyrics.split('\n').filter(line => line.trim());
-        let html = '';
-        lines.forEach(line => { html += `<span class="line">${line}</span>`; });
-        lyricsContent.innerHTML = html;
-      } else {
-        lyricsContent.innerHTML = '<p style="color: var(--muted);">📝 No lyrics found.</p>';
-      }
-    }
-
-    showLyricsBtn.addEventListener('click', () => {
-      const artist = artistEl.textContent;
-      const title = titleEl.textContent;
-      if (artist && title && artist !== 'SomaFM' && title !== 'Resistor') {
+      // Auto-show lyrics if Elise Mode is on
+      if (isEliseMode) {
         displayLyrics(artist, title);
-      } else {
-        lyricsContent.innerHTML = '<p style="color: var(--muted);">🎵 Play a track first.</p>';
-        lyricsPanel.style.display = 'block';
       }
-    });
-    closeLyrics.addEventListener('click', () => { lyricsPanel.style.display = 'none'; });
+    }
 
-    // ─── METADATA ───
+    // ─── METADATA FETCH ───
     async function fetchMetadata() {
       try {
+        // Try songhistory.html first
         const response = await fetch('https://somafm.com/indiepop/songhistory.html', {
           signal: AbortSignal.timeout(8000)
         });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const html = await response.text();
-        const match = html.match(/<b>(.*?)<\/b>\s*-\s*<span>(.*?)<\/span>/);
-        if (match) {
-          const artist = match[1].trim();
-          const title = match[2].trim();
-          if (artist && title && (currentSong.artist !== artist || currentSong.title !== title)) {
-            currentSong.artist = artist;
-            currentSong.title = title;
-            artistEl.textContent = artist;
-            titleEl.textContent = title;
-            setStatus('🎵 Now playing', 'playing');
-            addTrack(title, artist);
-            // Background lyrics fetch only if Elise Mode is on
-            if (isEliseMode) {
-              fetchLyrics(artist, title).then(lyrics => {
-                if (lyrics && lyricsPanel.style.display !== 'none') {
-                  const lines = lyrics.split('\n').filter(line => line.trim());
-                  let html = '';
-                  lines.forEach(line => { html += `<span class="line">${line}</span>`; });
-                  lyricsContent.innerHTML = html;
-                }
-              });
+        if (response.ok) {
+          const html = await response.text();
+          const match = html.match(/<b>(.*?)<\/b>\s*-\s*<span>(.*?)<\/span>/);
+          if (match) {
+            updateNowPlaying(match[1].trim(), match[2].trim());
+            return;
+          }
+        }
+
+        // Fallback: ICY metadata
+        const icyResponse = await fetch(STREAM_URL, {
+          headers: { 'Icy-MetaData': '1' },
+          signal: AbortSignal.timeout(5000)
+        });
+        if (icyResponse.ok) {
+          const reader = icyResponse.body.getReader();
+          const { value } = await reader.read();
+          const chunk = new TextDecoder().decode(value);
+          reader.releaseLock();
+          const icyMatch = chunk.match(/StreamTitle='([^']+)'/);
+          if (icyMatch) {
+            const full = icyMatch[1].trim();
+            if (full.includes(' - ')) {
+              const parts = full.split(' - ', 2);
+              updateNowPlaying(parts[0].trim(), parts[1].trim());
             }
           }
         }
       } catch (e) {
         console.debug('Metadata fetch error:', e.message);
+      }
+    }
+
+    // ─── LYRICS DISPLAY ───
+    async function displayLyrics(artist, title) {
+      lyricsPanel.style.display = 'block';
+      lyricsContent.innerHTML = '🔍 Searching...';
+
+      const lyrics = await fetchLyrics(artist, title);
+      if (lyrics) {
+        const lines = lyrics.split('\n').filter(line => line.trim());
+        let html = '';
+        lines.forEach(line => {
+          html += `<span class="line">${line}</span>`;
+        });
+        lyricsContent.innerHTML = html;
+      } else {
+        lyricsContent.innerHTML = '📝 No lyrics found.';
       }
     }
 
@@ -779,6 +671,93 @@
     // ─── VOLUME ───
     volumeSlider.addEventListener('input', () => { if (audio) audio.volume = parseFloat(volumeSlider.value); });
 
+    // ─── TRACKLIST TOGGLE ───
+    function toggleTracklist() {
+      isTracklistOpen = !isTracklistOpen;
+      tracklistItems.classList.toggle('open', isTracklistOpen);
+      tracklistArrow.classList.toggle('open', isTracklistOpen);
+    }
+    tracklistHeader.addEventListener('click', toggleTracklist);
+    tracklistToggle.addEventListener('click', toggleTracklist);
+
+    // ─── LYRICS BUTTON ───
+    showLyricsBtn.addEventListener('click', () => {
+      const artist = artistEl.textContent;
+      const title = titleEl.textContent;
+      if (artist && title && artist !== 'SomaFM' && title !== 'Resistor') {
+        displayLyrics(artist, title);
+      } else {
+        lyricsContent.innerHTML = '🎵 Play a track first.';
+        lyricsPanel.style.display = 'block';
+      }
+    });
+    closeLyrics.addEventListener('click', () => { lyricsPanel.style.display = 'none'; });
+
+    // ─── COPY METADATA ───
+    function copyMetadata() {
+      const title = titleEl.textContent;
+      const artist = artistEl.textContent;
+      const text = `${title} — ${artist}`;
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          setStatus('📋 Copied!', '');
+          setTimeout(() => setStatus('🎵 Now playing', 'playing'), 2000);
+        }).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+    nowPlaying.addEventListener('click', copyMetadata);
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setStatus('📋 Copied!', '');
+      setTimeout(() => setStatus('🎵 Now playing', 'playing'), 2000);
+    }
+
+    // ─── SETTINGS ───
+    function loadSettings() {
+      const stored = localStorage.getItem(SETTINGS_KEY);
+      if (stored) { settings = JSON.parse(stored); applySettings(); }
+    }
+
+    function saveSettings() { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
+
+    function applySettings() {
+      if (settings.darkMode) {
+        document.documentElement.removeAttribute('data-theme');
+        darkModeToggle.checked = true;
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        darkModeToggle.checked = false;
+      }
+      bufferSize.value = settings.bufferSize;
+      bufferLabel.textContent = settings.bufferSize + 's';
+      autoReconnectToggle.checked = settings.autoReconnect;
+      eliseModeToggle.checked = settings.eliseMode;
+      isEliseMode = settings.eliseMode;
+    }
+
+    function openSettings() { settingsModal.classList.add('open'); }
+    function closeSettingsModal() { settingsModal.classList.remove('open'); }
+    settingsToggle.addEventListener('click', openSettings);
+    closeSettings.addEventListener('click', closeSettingsModal);
+    settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettingsModal(); });
+
+    darkModeToggle.addEventListener('change', () => { settings.darkMode = darkModeToggle.checked; applySettings(); saveSettings(); });
+    bufferSize.addEventListener('input', () => { settings.bufferSize = parseInt(bufferSize.value); bufferLabel.textContent = settings.bufferSize + 's'; saveSettings(); });
+    autoReconnectToggle.addEventListener('change', () => { settings.autoReconnect = autoReconnectToggle.checked; saveSettings(); });
+    eliseModeToggle.addEventListener('change', () => {
+      settings.eliseMode = eliseModeToggle.checked;
+      isEliseMode = settings.eliseMode;
+      saveSettings();
+    });
+
     // ─── MEDIA SESSION ───
     if ('mediaSession' in navigator) {
       navigator.mediaSession.metadata = new MediaMetadata({ title: 'Indie Pop', artist: 'SomaFM', album: 'Resistor Radio' });
@@ -802,8 +781,9 @@
 
     // ─── INIT ───
     loadSettings();
-    loadTracklist();
+    tracklist = loadTracklist();
     loadLyricsCache();
+    renderTracklist();
     setStatus('🎵 Ready', '');
     updateUI(false);
     console.log('🎸 Resistor Radio — For Elise');
