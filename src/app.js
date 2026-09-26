@@ -263,27 +263,6 @@
     // ─── LYRICS DISPLAY ───
     async function displayLyrics(artist, title) {
       lyricsPanel.style.display = 'block';
-
-      if (!IS_NATIVE) {
-        dbg('LYRICS', 'skipped — lyrics only available in the APK');
-        lyricsContent.innerHTML =
-          '<p style="color: var(--muted);">📱 Lyrics work only in the Android app.</p>';
-        return;
-      }
-    
-      lyricsContent.innerHTML = '🔍 Searching...';
-    
-      const lyrics = await fetchLyrics(artist, title);
-      if (lyrics) {
-        const lines = lyrics.split('\n').filter(line => line.trim());
-        lyricsContent.innerHTML = lines.map(l => `<span class="line">${l}</span>`).join('');
-      } else {
-        lyricsContent.innerHTML = '📝 Lyrics unavailable for this track.';
-      }
-    }
-
-    async function displayLyrics(artist, title) {
-      lyricsPanel.style.display = 'block';
     
       if (!IS_NATIVE) {
         lyricsContent.innerHTML =
