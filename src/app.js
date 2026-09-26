@@ -98,6 +98,13 @@
     if (debugToggle) {
       debugToggle.title = IS_NATIVE ? 'Debug log' : 'Demo log';
     }
+
+    // ─── VERSION SURFACES ───
+    const aboutVersionEl = document.querySelector('.about-version');
+    if (aboutVersionEl) {
+      aboutVersionEl.textContent =
+        `Resistor ${VERSION} · SomaFM Indie Pop Rocks · 32 kbps AAC`;
+    }
     
     // ─── DEMO SEED (web only, in demo mode) ───
     if (DEBUG_MODE === 'demo' && !IS_NATIVE) {
