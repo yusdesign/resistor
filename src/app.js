@@ -7,6 +7,15 @@
     // ─── IMPORTS ───
     import { loadTracklist, saveTracklist, addTrack } from './tracklist.js';
     import { loadLyricsCache, saveLyricsCache, fetchLyrics } from './lyrics.js';
+
+    // ─── DEBUG LOGGER ───
+    const DEBUG = true;
+    const t0 = Date.now();
+    function dbg(tag, ...args) {
+      if (!DEBUG) return;
+      const ms = String(Date.now() - t0).padStart(6, ' ');
+      console.log(`[${ms}ms] ${tag}`, ...args);
+    }
     
     // ─── CAPACITOR DETECTION ───
     // No import needed. 
@@ -121,43 +130,24 @@
 
     // ─── METADATA FETCH ───
     async function fetchMetadata() {
+      dbg('META', 'fetch start');
       try {
-        const response = await fetch('https://somafm.com/indiepop/songhistory.html', {
+        const response = await fetch('https://somafm.com/songs/indiepop.json', {
           signal: AbortSignal.timeout(8000)
         });
-        if (response.ok) {
-          const html = await response.text();
-          const match = html.match(/<b>(.*?)<\/b>\s*-\s*<span>(.*?)<\/span>/);
-          if (match) {
-            updateNowPlaying(match[1].trim(), match[2].trim());
-            return;
-          }
-        }
-
-        // Fallback: ICY metadata from current stream
-        if (streamUrls.length > 0 && currentStreamIndex < streamUrls.length) {
-          const currentUrl = streamUrls[currentStreamIndex];
-          const icyResponse = await fetch(currentUrl, {
-            headers: { 'Icy-MetaData': '1' },
-            signal: AbortSignal.timeout(5000)
-          });
-          if (icyResponse.ok) {
-            const reader = icyResponse.body.getReader();
-            const { value } = await reader.read();
-            const chunk = new TextDecoder().decode(value);
-            reader.releaseLock();
-            const icyMatch = chunk.match(/StreamTitle='([^']+)'/);
-            if (icyMatch) {
-              const full = icyMatch[1].trim();
-              if (full.includes(' - ')) {
-                const parts = full.split(' - ', 2);
-                updateNowPlaying(parts[0].trim(), parts[1].trim());
-              }
-            }
-          }
+        dbg('META', 'response', response.status);
+        if (!response.ok) return;
+    
+        const data = await response.json();
+        dbg('META', 'songs', data.songs?.length);
+    
+        const current = data.songs?.[0];
+        if (current && current.artist && current.title) {
+          dbg('META', 'now playing', current.artist, '-', current.title);
+          updateNowPlaying(current.artist, current.title);
         }
       } catch (e) {
-        console.debug('Metadata fetch error:', e.message);
+        dbg('META', 'fetch error', e.name, e.message);
       }
     }
 
@@ -210,23 +200,21 @@
 
     // SETMETADATA
     function startMetadataLoop() {
+      dbg('LOOP', 'start');
       if (metadataTimer) clearTimeout(metadataTimer);
       const tick = async () => {
         if (!isPlaying) {
           metadataTimer = setTimeout(tick, 5000);
           return;
         }
-        try {
-          await fetchMetadata();
-          metadataTimer = setTimeout(tick, 20000);
-        } catch (e) {
-          metadataTimer = setTimeout(tick, 60000);
-        }
+        await fetchMetadata();
+        metadataTimer = setTimeout(tick, 20000);
       };
       metadataTimer = setTimeout(tick, 1000);
     }
     
     function stopMetadataLoop() {
+      dbg('LOOP', 'stop');
       if (metadataTimer) {
         clearTimeout(metadataTimer);
         metadataTimer = null;
@@ -235,11 +223,14 @@
 
     // ─── AUDIO SETUP ───
     async function setupAudio() {
+      dbg('SETUP', 'start', { IS_NATIVE, hasAudio: !!audio });
       // ─────────────────────────────────────────────
       // NATIVE (Capacitor APK) — talk to SomaPlugin
       // ─────────────────────────────────────────────
       if (IS_NATIVE) {
+        dbg('SETUP', 'native branch, calling Soma.start');
         await Soma.start({ station: 'indiepop' });
+        dbg('SETUP', 'Soma.start resolved');
     
         if (audio) {
           audio.pause();
@@ -289,11 +280,13 @@
             updateUI(false);
           }
         });
-    
+
+        dbg('SETUP', 'calling audio.play() on', audio.src);
         try {
           await audio.play();
+          dbg('SETUP', 'audio.play() resolved');
         } catch (e) {
-          console.warn('Native play failed:', e.message);
+          dbg('SETUP', 'audio.play() rejected', e.name, e.message);
           setStatus('⚠️ Play error', 'error');
         }
     
@@ -319,6 +312,7 @@
       for (let i = currentStreamIndex; i < streamUrls.length; i++) {
         try {
           const url = streamUrls[i];
+          dbg('STREAM', `try ${i + 1}/${streamUrls.length}`, url);
           console.log(`📡 Trying stream ${i + 1}/${streamUrls.length}: ${url}`);
           audio = new Audio();
           audio.src = url;
@@ -328,10 +322,12 @@
           audio.volume = parseFloat(volumeSlider.value);
     
           await audio.play();
+          dbg('STREAM', `stream ${i + 1} OK`);
           currentStreamIndex = i;
           success = true;
           break;
         } catch (e) {
+          dbg('STREAM', `stream ${i + 1} fail`, e.name, e.message);
           console.warn(`Stream ${i + 1} failed:`, e.message);
           continue;
         }
@@ -344,6 +340,7 @@
     
       // ─── EVENT LISTENERS ───
       audio.addEventListener('playing', () => {
+        dbg('AUDIO', 'playing');
         isPlaying = true;
         updateUI(true);
         setStatus('🎵 Playing', 'playing');
@@ -353,13 +350,27 @@
       });
     
       audio.addEventListener('pause', () => {
+        dbg('AUDIO', 'pause');
         isPlaying = false;
         updateUI(false);
         setStatus('⏸ Paused', '');
         stopMetadataLoop();
       });
+
+      audio.addEventListener('waiting', () => {
+        dbg('AUDIO', 'waiting (buffer underrun)');
+      });
+      
+      audio.addEventListener('stalled', () => {
+        dbg('AUDIO', 'stalled (no data)');
+      });
+      
+      audio.addEventListener('canplay', () => {
+        dbg('AUDIO', 'canplay');
+      });
     
       audio.addEventListener('error', (e) => {
+        dbg('AUDIO', 'error', audio.error?.code, audio.error?.message);
         console.error('Audio error:', e);
         isPlaying = false;
         updateUI(false);
