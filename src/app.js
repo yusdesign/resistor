@@ -7,26 +7,72 @@
     import { loadTracklist, saveTracklist, addTrack } from './tracklist.js';
     import { loadLyricsCache, saveLyricsCache, fetchLyrics } from './lyrics.js';
 
-    // ─── DEBUG LOGGER ───
+    // ─── DEBUG LOGGER (on-screen, no adb needed) ───
     const DEBUG = true;
     const t0 = Date.now();
-    const DEBUG_OVERLAY = true;
     const debugEl = document.getElementById('debugLog');
-    if (DEBUG && DEBUG_OVERLAY && debugEl) {
-      debugEl.style.display = 'block';
-    }
+    const debugPanel = document.getElementById('debugPanel');
+    const debugToggle = document.getElementById('debugToggle');
+    const debugCopy = document.getElementById('debugCopy');
+    const debugClear = document.getElementById('debugClear');
+    
+    const debugLines = [];
+    const DEBUG_MAX_LINES = 500;
+    
     function dbg(tag, ...args) {
       if (!DEBUG) return;
-      const ms = String(Date.now() - t0).padStart(6, ' ');
-      const line = `[${ms}ms] ${tag} ${args.map(a =>
-        typeof a === 'object' ? JSON.stringify(a) : String(a)
-      ).join(' ')}`;
+      const ms = String(Date.now() - t0).padStart(7, ' ');
+      const rest = args.map(a => {
+        if (a instanceof Error) return `${a.name}: ${a.message}`;
+        if (typeof a === 'object') {
+          try { return JSON.stringify(a); } catch { return String(a); }
+        }
+        return String(a);
+      }).join(' ');
+      const line = `[${ms}ms] ${tag}${rest ? ' ' + rest : ''}`;
       console.log(line);
+      debugLines.push(line);
+      if (debugLines.length > DEBUG_MAX_LINES) debugLines.shift();
       if (debugEl) {
-        debugEl.textContent += line + '\n';
+        debugEl.textContent = debugLines.join('\n');
         debugEl.scrollTop = debugEl.scrollHeight;
       }
     }
+    
+    if (debugToggle && debugPanel) {
+      debugToggle.addEventListener('click', () => {
+        debugPanel.classList.toggle('open');
+      });
+    }
+    if (debugCopy) {
+      debugCopy.addEventListener('click', async () => {
+        const text = debugLines.join('\n');
+        try {
+          await navigator.clipboard.writeText(text);
+          debugCopy.textContent = 'Copied';
+        } catch {
+          // fallback: select and copy
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          debugCopy.textContent = 'Copied';
+        }
+        setTimeout(() => (debugCopy.textContent = 'Copy'), 1500);
+      });
+    }
+    if (debugClear) {
+      debugClear.addEventListener('click', () => {
+        debugLines.length = 0;
+        if (debugEl) debugEl.textContent = '';
+      });
+    }
+    
+    // initial banner
+    dbg('BOOT', navigator.userAgent);
+    dbg('BOOT', 'native=' + (typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.()));
     
     // ─── CAPACITOR DETECTION ───
     // No import needed. 
@@ -254,7 +300,11 @@
         audio.src = 'http://127.0.0.1:8765/?t=' + Date.now();
         audio.volume = parseFloat(volumeSlider.value);
     
+        // ─── EVENT LISTENERS (native) ───
+        let lastWaitingLogAt = 0;
+        
         audio.addEventListener('playing', () => {
+          dbg('AUDIO', 'playing');
           isPlaying = true;
           reconnectAttempts = 0;
           updateUI(true);
@@ -262,30 +312,56 @@
           stopMetadataLoop();
           startMetadataLoop();
         });
-    
+        
         audio.addEventListener('pause', () => {
+          dbg('AUDIO', 'pause');
           isPlaying = false;
           updateUI(false);
           setStatus('⏸ Paused', '');
           stopMetadataLoop();
         });
-    
+        
+        audio.addEventListener('waiting', () => {
+          const now = Date.now();
+          if (now - lastWaitingLogAt > 2000) {
+            dbg('AUDIO', 'waiting (buffer underrun)');
+            lastWaitingLogAt = now;
+          }
+          if (isPlaying) setStatus('⏳ Buffering…', 'buffering');
+        });
+        
+        audio.addEventListener('stalled', () => {
+          dbg('AUDIO', 'stalled (no data for ~3s)');
+          if (isPlaying) setStatus('⏳ Stalled…', 'buffering');
+        });
+        
+        audio.addEventListener('canplay', () => {
+          dbg('AUDIO', 'canplay (ready to resume)');
+        });
+        
         audio.addEventListener('error', () => {
+          const code = audio.error?.code;
+          const msg = audio.error?.message;
+          dbg('AUDIO', 'error', { code, msg });
+        
           if (settings.autoReconnect && isPlaying && reconnectAttempts < 3) {
             reconnectAttempts++;
+            dbg('RECONNECT', `attempt ${reconnectAttempts}/3`);
             setStatus(`⟳ Reconnecting… (${reconnectAttempts}/3)`, 'buffering');
             setTimeout(() => {
               if (!audio) return;
               audio.src = 'http://127.0.0.1:8765/?t=' + Date.now();
-              audio.play().catch(() => {
+              audio.play().catch((e) => {
+                dbg('RECONNECT', 'play failed', e.name, e.message);
                 if (reconnectAttempts >= 3) {
                   setStatus('❌ Stream error', 'error');
                   isPlaying = false;
                   updateUI(false);
                 }
               });
-            }, 1500 * reconnectAttempts);   // backoff: 1.5s, 3s, 4.5s
+            }, 1500 * reconnectAttempts);
           } else {
+            dbg('RECONNECT', 'giving up', { autoReconnect: settings.autoReconnect, isPlaying, reconnectAttempts });
             setStatus('❌ Stream error', 'error');
             isPlaying = false;
             updateUI(false);
