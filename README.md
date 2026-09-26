@@ -1,1 +1,10 @@
-<div align="left"><img src="public/resistor.svg" style="height:48px" alt="Resistor App">Resistor</div>
+<div align="left">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/resistor-dark.svg">
+    <img src="public/resistor.svg" alt="Resistor App" width="48" height="48">
+  </picture>
+  <h1 style="display: inline; vertical-align: middle;">Resistor</h1>
+</div>
+
+Lightweight radio stream player with lyrics and tracklist for **SomaFM Indie Pop Rocks**.
+Made with ♥ && Capacitor.
