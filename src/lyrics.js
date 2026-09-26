@@ -1,5 +1,6 @@
 // ─── LYRICS CORE ───
 const LYRICS_CACHE_KEY = 'resistor_lyrics_cache';
+
 let lyricsCache = {};
 
 export function loadLyricsCache() {
@@ -13,11 +14,16 @@ export function saveLyricsCache() {
 }
 
 export async function fetchLyrics(artist, title) {
+  // Lyrics only make sense when we actually have a track playing —
+  // which only happens in the APK. On the web, skip entirely.
+  const isNative = typeof window !== 'undefined'
+    && !!window.Capacitor?.isNativePlatform?.();
+  if (!isNative) return null;
+
   const cacheKey = `${artist} - ${title}`;
   if (lyricsCache[cacheKey]) return lyricsCache[cacheKey];
 
   try {
-    // Primary: LRCLIB (free, no auth)
     const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
     const response = await fetch(url);
     if (response.ok) {
