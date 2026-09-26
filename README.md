@@ -6,5 +6,5 @@
   <h1 style="display: inline; vertical-align: middle;">Resistor</h1>
 </div>
 
-Lightweight radio stream player with lyrics and tracklist for **SomaFM Indie Pop Rocks**.
-Made with ♥ && Capacitor.
+Lightweight radio stream player with lyrics and tracklist made for *SomaFM Indie Pop Rocks!*.  
+With ♥ && Capacitor :)
