@@ -1,18 +1,35 @@
-// ━━━━━━━━━━━━━━━━━
-//  RESISTOR RADIO 
-//  SomaFM Indie Pop
-// ━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  RESISTOR app is SomaFM Indie Pop Rocks! Radio, v1.0.0b
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     // ─── IMPORTS ───
     import { loadTracklist, saveTracklist, addTrack } from './tracklist.js';
     import { loadLyricsCache, saveLyricsCache, fetchLyrics } from './lyrics.js';
+    
+    // ─── BUILD INFO ───
+    import pkg from '../package.json' with { type: 'json' };
+    const VERSION = pkg.version;
+    // const VERSION = '1.0.0b';
 
-    // ─── DEBUG LOGGER (on-screen, no adb needed) ───
+    // debug mode: 'demo' (seeded panel on web) or 'live' (real logs only)
+    // default is 'demo'. override with ?mode=live or ?mode=demo in the URL.
+    const DEBUG_MODE = (() => {
+      const q = new URLSearchParams(location.search).get('mode');
+      return (q === 'live' || q === 'demo') ? q : 'demo';
+    })();
+    
+    // ─── CAPACITOR DETECTION ───
+    const IS_NATIVE = typeof window !== 'undefined'
+      && !!window.Capacitor?.isNativePlatform?.();
+    const Soma = IS_NATIVE ? window.Capacitor.Plugins.Soma : null;
+    
+    // ─── DEBUG LOGGER ───
     const DEBUG = true;
     const t0 = Date.now();
     const debugEl = document.getElementById('debugLog');
     const debugPanel = document.getElementById('debugPanel');
     const debugToggle = document.getElementById('debugToggle');
+    const debugTitle = document.getElementById('debugTitle');
     const debugCopy = document.getElementById('debugCopy');
     const debugClear = document.getElementById('debugClear');
     
@@ -39,6 +56,7 @@
       }
     }
     
+    // ─── PANEL BEHAVIOR ───
     if (debugToggle && debugPanel) {
       debugToggle.addEventListener('click', () => {
         debugPanel.classList.toggle('open');
@@ -51,7 +69,6 @@
           await navigator.clipboard.writeText(text);
           debugCopy.textContent = 'Copied';
         } catch {
-          // fallback: select and copy
           const ta = document.createElement('textarea');
           ta.value = text;
           document.body.appendChild(ta);
@@ -70,22 +87,29 @@
       });
     }
     
-    // initial banner
-    dbg('BOOT', navigator.userAgent);
-    dbg('BOOT', 'native=' + (typeof window !== 'undefined' && !!window.Capacitor?.isNativePlatform?.()));
+    // ─── BOOT LINE ───
+    dbg('BOOT', `Resistor ${VERSION} · mode=${DEBUG_MODE} · native=${IS_NATIVE}`);
+    // ─── PANEL TITLE ───
+    if (debugTitle) {
+      debugTitle.textContent = IS_NATIVE
+        ? `Resistor ${VERSION} — debug`
+        : `Resistor ${VERSION} — demo`;
+    }
+    if (debugToggle) {
+      debugToggle.title = IS_NATIVE ? 'Debug log' : 'Demo log';
+    }
     
-    // ─── CAPACITOR DETECTION ───
-    // No import needed. 
-    const IS_NATIVE = typeof window !== 'undefined'
-      && !!window.Capacitor?.isNativePlatform?.();
-    const Soma = IS_NATIVE ? window.Capacitor.Plugins.Soma : null;
-    if (!IS_NATIVE) {
+    // ─── DEMO SEED (web only, in demo mode) ───
+    if (DEBUG_MODE === 'demo' && !IS_NATIVE) {
+      // if (debugTitle) debugTitle.textContent = `Resistor ${VERSION} — demo`;
+      // if (debugToggle) debugToggle.title = 'Demo log';
+    
       dbg('DEMO', 'Resistor web preview');
       dbg('DEMO', 'Native plugin not available in the browser.');
       dbg('DEMO', 'Below is a simulated log of what the APK does.');
       dbg('DEMO', '─────');
       dbg('DEMO', 'SETUP  → Soma.start({ station: "indiepop" })');
-      dbg('DEMO', 'SETUP  → audio.src = "http://127.0.0.1:8765/?t=..."');
+      dbg('DEMO', 'SETUP  → audio.src = "http://127.0.0.1:8765/?t=…"');
       dbg('DEMO', 'AUDIO  → playing  (buffer 32 kbps AAC)');
       dbg('DEMO', 'LOOP   → metadata polling every 20s');
       dbg('DEMO', 'META   → GET somafm.com/songs/indiepop.json');
@@ -93,10 +117,6 @@
       dbg('DEMO', 'META   → lyrics lookup via LRCLIB on demand');
       dbg('DEMO', '─────');
       dbg('DEMO', 'To hear the stream, install the Android APK.');
-      const btn = document.getElementById('debugToggle');
-      if (btn) btn.title = 'Demo log';
-      const title = document.getElementById('debugTitle');
-      if (title) title.textContent = 'Resistor — demo mode';
     }
 
     // ─── CONFIG ───
