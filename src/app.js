@@ -304,104 +304,26 @@
         return audio;
       }
     
-      // ─────────────────────────────────────────────
-      // WEB (browser) — original ice-server path
+      // WEB (browser) — SomaFM refuses browser requests.
+      // Show an honest notice instead of retrying forever.
       // ─────────────────────────────────────────────
       if (audio) {
         audio.pause();
         audio.src = '';
         audio = null;
       }
-    
-      if (streamUrls.length === 0) {
-        streamUrls = await fetchStreamUrls();
-        currentStreamIndex = 0;
-      }
-    
-      // Try the current stream, fallback to next if it fails
-      let success = false;
-      for (let i = currentStreamIndex; i < streamUrls.length; i++) {
-        try {
-          const url = streamUrls[i];
-          dbg('STREAM', `try ${i + 1}/${streamUrls.length}`, url);
-          console.log(`📡 Trying stream ${i + 1}/${streamUrls.length}: ${url}`);
-          audio = new Audio();
-          audio.src = url;
-          audio.crossOrigin = 'anonymous';
-          audio.preload = 'metadata';
-          audio.setAttribute('decoding', 'async');
-          audio.volume = parseFloat(volumeSlider.value);
-    
-          await audio.play();
-          dbg('STREAM', `stream ${i + 1} OK`);
-          currentStreamIndex = i;
-          success = true;
-          break;
-        } catch (e) {
-          dbg('STREAM', `stream ${i + 1} fail`, e.name, e.message);
-          console.warn(`Stream ${i + 1} failed:`, e.message);
-          continue;
-        }
-      }
-    
-      if (!success) {
-        setStatus('❌ All streams failed', 'error');
-        return null;
-      }
-    
-      // ─── EVENT LISTENERS ───
-      audio.addEventListener('playing', () => {
-        dbg('AUDIO', 'playing');
-        isPlaying = true;
-        updateUI(true);
-        setStatus('🎵 Playing', 'playing');
-        stopMetadataLoop();
-        startMetadataLoop();
-        fetchMetadata();
-      });
-    
-      audio.addEventListener('pause', () => {
-        dbg('AUDIO', 'pause');
-        isPlaying = false;
-        updateUI(false);
-        setStatus('⏸ Paused', '');
-        stopMetadataLoop();
-      });
-
-      audio.addEventListener('waiting', () => {
-        dbg('AUDIO', 'waiting (buffer underrun)');
-      });
       
-      audio.addEventListener('stalled', () => {
-        dbg('AUDIO', 'stalled (no data)');
-      });
+      dbg('SETUP', 'web branch — showing app-required notice');
+      setStatus('📱 Playback requires the Android app', 'error');
+      isPlaying = false;
+      updateUI(false);
       
-      audio.addEventListener('canplay', () => {
-        dbg('AUDIO', 'canplay');
-      });
-    
-      audio.addEventListener('error', (e) => {
-        dbg('AUDIO', 'error', audio.error?.code, audio.error?.message);
-        console.error('Audio error:', e);
-        isPlaying = false;
-        updateUI(false);
-        stopMetadataLoop();
-    
-        if (currentStreamIndex < streamUrls.length - 1) {
-          currentStreamIndex++;
-          setStatus(`❌ Stream error. Trying stream ${currentStreamIndex + 1}/${streamUrls.length}…`, 'error');
-          setTimeout(async () => {
-            await setupAudio();
-            if (audio && settings.autoReconnect) {
-              audio.play().catch(() => setStatus('❌ Play failed', 'error'));
-            }
-          }, 3000);
-        } else {
-          setStatus('❌ All streams exhausted', 'error');
-        }
-      });
-    
-      return audio;
+      const notice = document.getElementById('status');
+      if (notice) {
+        notice.title = 'SomaFM blocks browser-originated streams. Install the Android APK to listen.';
+      }
+      
+      return null;
     }
 
     // ─── PLAYBACK ───
