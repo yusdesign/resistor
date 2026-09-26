@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Resistor</string>
+    <string name="title_activity_main">Resistor</string>
+    <string name="package_name">com.resistor.app</string>
+    <string name="custom_url_scheme">com.resistor.app</string>
+</resources>
