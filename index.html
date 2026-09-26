@@ -9,87 +9,71 @@
 <body>
   <!-- ─── SVG SPRITE (INLINE) ─── -->
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
-    <!-- header mark: a resistor in diagonal -->
     <symbol id="resistor" viewBox="0 0 24 24">
-      <path d="M3 3l4.5 4.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" fill="none"/>
-      <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" fill="none"/>
-      <path d="M6.5 6.5h2l1 1 2-2 2 2 1-1h2"
-            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <path d="M6.5 6.5l11 11"
-            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" fill="none" opacity="0"/>
-      <circle cx="4" cy="4" r="1.2" fill="currentColor"/>
-      <circle cx="20" cy="20" r="1.2" fill="currentColor"/>
+      <path d="m8.3 12.6 4.24-4.24 3.18 3.18-4.27 4.22z" fill="#a91b34" style="paint-order:stroke fill markers"/>
+      <path d="m11.2 9.84c0.0159 1.41 1.1 2.58 3.07 3.42" fill="none" stroke="#ffcb2f" stroke-miterlimit="0" stroke-width=".998"/>
+      <path d="m10 11.1c0.0848 1.64 2.48 3.25 3.03 3.42" fill="none" stroke="#ffcb2f" stroke-miterlimit="0" stroke-width=".998"/>
+      <path d="m7.24 12.5 4.23 4.25z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="0" stroke-width="2"/>
+      <path d="m12.6 7.22 4.24 4.24z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="0" stroke-width="2"/>
+      <path d="m11.5 16.8c-0.0159-1.1 4.08-5.14 5.3-5.3" fill="none" stroke="currentColor" stroke-miterlimit="0" stroke-width=".998"/>
+      <path d="m13 7.21c0.0159 1.1-4.08 5.14-5.3 5.3" fill="none" stroke="currentColor" stroke-miterlimit="0" stroke-width=".998"/>
+      <path d="m17 7.04-2.88 2.88z" fill="none" stroke="currentColor" stroke-miterlimit="0"/>
+      <path d="m9.89 14.1-2.88 2.88z" fill="none" stroke="currentColor" stroke-miterlimit="0"/>
+      <path d="m19.1 6.26a1.26 1.26 0 0 1-1.26 1.26 1.26 1.26 0 0 1-1.26-1.26 1.26 1.26 0 0 1 1.26-1.26 1.26 1.26 0 0 1 1.26 1.26z" fill="none" stroke="currentColor" style="paint-order:stroke fill markers"/>
+      <path d="m7.34 17.8a1.26 1.26 0 0 1-1.26 1.26 1.26 1.26 0 0 1-1.26-1.26 1.26 1.26 0 0 1 1.26-1.26 1.26 1.26 0 0 1 1.26 1.26z" fill="none" stroke="currentColor" style="paint-order:stroke fill markers"/>
     </symbol>
   
-    <!-- play -->
     <symbol id="play-icon" viewBox="0 0 24 24">
-      <rect x="3" y="3" width="18" height="18" rx="1.5"
-            stroke="currentColor" stroke-width="1.75" fill="none"/>
-      <path d="M9.5 8.2v7.6l6-3.8z"
-            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <rect x="2.9091" y="2.9091" width="18.182" height="18.182" rx="1.0909" ry="1.0909" style="fill:none;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2;stroke:currentColor"/>
+      <path d="m 9.2920256,8.0000997 6.2905054,4.0000003 -6.2905054,4 z" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"/>
     </symbol>
   
-    <!-- pause -->
     <symbol id="pause-icon" viewBox="0 0 24 24">
-      <rect x="3" y="3" width="18" height="18" rx="1.5"
-            stroke="currentColor" stroke-width="1.75" fill="none"/>
-      <path d="M10 8v8M14 8v8"
-            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" fill="none"/>
+      <rect x="2.9091" y="2.9091" width="18.182" height="18.182" rx="1.0909" ry="1.0909" style="fill:none;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2;stroke:currentColor"/>
+      <path d="M 10.041646,8.0000997 V 16.0001 Z" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"/>
+      <path d="M 14.081264,8.0000997 V 16.0001 Z" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"/>
     </symbol>
   
-    <!-- lyrics -->
     <symbol id="lyrics-icon" viewBox="0 0 24 24">
-      <path d="M5 5l1.2 3.6S5 10.8 5 13.2c0 3.6 2.4 4.8 7 4.8s7-1.2 7-4.8c0-2.4-1.2-4.8-1.2-4.8L19 5"
-            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <path d="M9.5 20v-15M12 21V3M14.5 20v-15"
-            stroke="currentColor" stroke-width="1.25" stroke-linecap="round" fill="none"/>
-      <path d="M4 9h16"
-            stroke="currentColor" stroke-width="1.25" stroke-linecap="round" fill="none"/>
+      <path d="m3.43 3.43 1.43 4.29s-1.43 2.86-1.43 5.71c0 4.29 2.86 5.71 8.57 5.71 5.71 0 8.57-1.43 8.57-5.71 0-2.86-1.43-5.71-1.43-5.71l1.43-4.29" fill="none" stroke="currentColor" stroke-miterlimit="0" stroke-width="2"/>
+      <path d="m8.5 21v-17.6" fill="none" stroke="currentColor" stroke-miterlimit="0"/>
+      <path d="m12 22v-20" fill="none" stroke="currentColor" stroke-miterlimit="0"/>
+      <path d="m15.5 21v-17.6" fill="none" stroke="currentColor" stroke-miterlimit="0"/>
+      <path d="m2 7.5h20" fill="none" stroke="currentColor" stroke-miterlimit="0"/>
     </symbol>
   
-    <!-- tracklist -->
     <symbol id="tracklist-icon" viewBox="0 0 24 24">
-      <path d="M4 17V7a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"
-            stroke="currentColor" stroke-width="1.75" fill="none"/>
-      <path d="M9.5 19V5M14.5 19V5M5 9.5h14M5 14.5h14"
-            stroke="currentColor" stroke-width="1.25" stroke-linecap="round" fill="none"/>
+      <path d="m9.5 19.5v-15.1" fill="none" stroke="currentColor" stroke-linecap="square" stroke-linejoin="bevel" stroke-miterlimit="0" stroke-width=".961"/>
+      <path d="m19.5 14.5h-15.1" fill="none" stroke="currentColor" stroke-linecap="square" stroke-linejoin="bevel" stroke-miterlimit="0" stroke-width=".961"/>
+      <path d="m3 18.4v-12.9a2.57 2.57 0 0 1 2.57-2.57h12.9a2.57 2.57 0 0 1 2.57 2.57v12.9a2.57 2.57 0 0 1-2.57 2.57h-12.9a2.57 2.57 0 0 1-2.57-2.57z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="0" stroke-width="2.06"/>
+      <path d="m19.5 8.5h-15" fill="none" stroke="currentColor" stroke-linecap="square" stroke-linejoin="bevel" stroke-miterlimit="0" stroke-width=".982"/>
     </symbol>
   
-    <!-- heart (auto-lyrics toggle) -->
     <symbol id="heart-icon" viewBox="0 0 24 24">
-      <path d="M12 20.3S4 16 4 10.2C4 7.5 5.8 5.5 8.2 5.5c1.6 0 3 .9 3.8 2.1.8-1.2 2.2-2.1 3.8-2.1 2.4 0 4.2 2 4.2 4.7 0 5.8-8 10.1-8 10.1z"
-            stroke="currentColor" stroke-width="1.75" stroke-linejoin="round" fill="none"/>
+      <path d="m7 4.75c3 0 5 3.12 5 3.12s2-3.12 5-3.12 4 3 4 5c0 6-9 10.2-9 10.2s-9-4.25-9-10.2c0-2 1-5 4-5z" fill="none" stroke="currentColor" stroke-width="2" style="paint-order:stroke fill markers"/>
     </symbol>
   
-    <!-- documentation (kept for future use) -->
-    <symbol id="documentation-icon" viewBox="0 0 24 24">
-      <path d="M18 15l1.5 1.3c.6.55.9.83.9 1.18s-.3.62-.9 1.18L18 20m-3.5-5l-1.5 1.3c-.6.55-.9.83-.9 1.18s.3.62.9 1.18L14.5 20"
-            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <path d="M17 12V7.5c0-1.4 0-2.1-.2-2.7a3 3 0 0 0-2.1-2C14.1 2.6 13.4 2.6 12 2.6s-2.1 0-2.9.3A4.2 4.2 0 0 0 5.5 6.5C5 7.4 5 8.7 5 11v2.1c0 2.6 0 3.8.7 4.7.2.3.5.5.7.7.8.5 1.8.6 3.6.7"
-            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <path d="M5 10a3 3 0 0 1 2.8-2.8c.6 0 1.2.1 1.7 0a1.5 1.5 0 0 0 1-1c.1-.5 0-1.2 0-1.7A3 3 0 0 1 12.8 2"
-            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <symbol id="documentation-icon" viewBox="0 0 21 20">
+      <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="m15.5 13.333 1.533 1.322c.645.555.967.833.967 1.178s-.322.623-.967 1.179L15.5 18.333m-3.333-5-1.534 1.322c-.644.555-.966.833-.966 1.178s.322.623.966 1.179l1.534 1.321"/>
+      <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M17.167 10.836v-4.32c0-1.41 0-2.117-.224-2.68-.359-.906-1.118-1.621-2.08-1.96-.599-.21-1.349-.21-2.848-.21-2.623 0-3.935 0-4.983.369-1.684.591-3.013 1.842-3.641 3.428C3 6.449 3 7.684 3 10.154v2.122c0 2.558 0 3.838.706 4.726q.306.383.713.671c.76.536 1.79.64 3.581.66"/>
+      <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M3 10a2.78 2.78 0 0 1 2.778-2.778c.555 0 1.209.097 1.748-.047.48-.129.854-.503.982-.982.145-.54.048-1.194.048-1.749a2.78 2.78 0 0 1 2.777-2.777"/>
     </symbol>
   
-    <!-- close -->
     <symbol id="close-icon" viewBox="0 0 24 24">
-      <rect x="3" y="3" width="18" height="18" rx="1.5"
-            stroke="currentColor" stroke-width="1.75" fill="none"/>
-      <path d="M8.5 8.5l7 7M15.5 8.5l-7 7"
-            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" fill="none"/>
+      <rect x="2.9091" y="2.9091" width="18.182" height="18.182" rx="1.0909" ry="1.0909" style="fill:none;stroke:currentColor;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2"/>
+      <path d="m8 8 8 8" style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2"/>
+      <path d="m16 8-8 8" style="fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2"/>
     </symbol>
   
-    <!-- settings: solid gear, fill-based, reads in dark mode -->
     <symbol id="settings-icon" viewBox="0 0 24 24">
-      <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"
-            d="M10.6 2.2h2.8l.4 2.1c.6.15 1.15.4 1.65.72l1.75-1.2 1.98 1.98-1.2 1.75c.32.5.57 1.05.72 1.65l2.1.4v2.8l-2.1.4c-.15.6-.4 1.15-.72 1.65l1.2 1.75-1.98 1.98-1.75-1.2c-.5.32-1.05.57-1.65.72l-.4 2.1h-2.8l-.4-2.1a6.6 6.6 0 0 1-1.65-.72l-1.75 1.2L5.0 18.1l1.2-1.75a6.6 6.6 0 0 1-.72-1.65l-2.1-.4v-2.8l2.1-.4c.15-.6.4-1.15.72-1.65L5.0 7.7l1.98-1.98 1.75 1.2c.5-.32 1.05-.57 1.65-.72zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
+      <path d="m1.61 14.8 7.61 7.6 10.4-2.78 2.79-10.4-7.61-7.6-10.4 2.78zm4.33-4.41 4.44-4.44 6.06 1.62 1.62 6.06-4.44 4.44-6.06-1.62z" fill="currentColor"/>
     </symbol>
   </svg>
 
   <div class="player" id="app">
     <!-- ─── HEADER ─── -->
     <div class="header">
-      <h1><svg viewBox="0 0 24 24"><use href="#resistor"/></svg> Resistor</h1>
+      <h1><button class="icon-btn"><svg viewBox="0 0 24 24"><use href="#resistor"/></svg></button> Resistor</h1>
       <div class="header-actions">
         <button class="icon-btn" id="tracklistToggle" title="Tracklist" aria-label="Toggle tracklist">
           <svg viewBox="0 0 24 24"><use href="#tracklist-icon"/></svg>
