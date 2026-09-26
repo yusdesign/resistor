@@ -6,7 +6,7 @@
   --border: rgba(255,255,255,0.08);
   --text: #fff;
   --muted: #888;
-  --accent: #ff6b6b;
+  --accent: #b17ec4;
   --playing: #4ecdc4;
   --surface: #1a1a2e;
   --shadow: rgba(0,0,0,0.8);
@@ -80,6 +80,8 @@ body {
 }
 .header-actions .icon-btn,
 .controls-bar .icon-btn {
+  height: 25px;
+  width: 25px;
   border-radius: 4px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -160,9 +162,9 @@ body {
   stroke: var(--playing);
 }
 .play-btn {
-  width: 72px;
-  height: 72px;
-  border-radius: 50% !important;
+  width: 42px;
+  height: 42px;
+  border-radius: 5% !important;
   border: none;
   background: var(--accent);
   cursor: pointer;
