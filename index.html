@@ -147,12 +147,19 @@
   </div>
 
   <script type="module" src="src/app.js"></script>
-  <pre id="debugLog" style="
-    position:fixed; bottom:0; left:0; right:0;
-    max-height:40vh; overflow:auto;
-    background:rgba(0,0,0,0.85); color:#0f0;
-    font:11px/1.4 monospace; padding:8px;
-    display:none; z-index:9999; white-space:pre-wrap;
-  "></pre>
+  <!-- ─── DEBUG PANEL (dev only) ─── -->
+  <div id="debugPanel" class="debug-panel">
+    <button id="debugToggle" class="debug-toggle" aria-label="Toggle debug log">⚙︎</button>
+    <div class="debug-body" id="debugBody">
+      <div class="debug-head">
+        <span id="debugTitle">Resistor debug</span>
+        <span class="debug-actions">
+          <button id="debugCopy" class="debug-btn">Copy</button>
+          <button id="debugClear" class="debug-btn">Clear</button>
+        </span>
+      </div>
+      <pre id="debugLog" class="debug-log"></pre>
+    </div>
+  </div>
 </body>
 </html>
