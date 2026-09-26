@@ -392,6 +392,81 @@ body {
   transition: opacity 0.2s;
 }
 .settings-close-btn:hover { opacity: 0.8; }
+/* ─── DEBUG PANEL ─── */
+.debug-panel {
+  position: fixed;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+.debug-panel > * { pointer-events: auto; }
+
+.debug-toggle {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px var(--shadow);
+  transition: transform 0.15s;
+}
+.debug-toggle:active { transform: scale(0.92); }
+
+.debug-body {
+  display: none;
+  width: min(92vw, 640px);
+  max-height: 60vh;
+  background: rgba(0, 0, 0, 0.92);
+  color: #0f0;
+  border: 1px solid #2a2a2a;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  overflow: hidden;
+  flex-direction: column;
+}
+.debug-panel.open .debug-body { display: flex; }
+
+.debug-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: #111;
+  color: #ccc;
+  font-size: 11px;
+  font-family: monospace;
+  border-bottom: 1px solid #222;
+}
+.debug-actions { display: flex; gap: 6px; }
+.debug-btn {
+  background: #222;
+  color: #ddd;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.debug-btn:active { background: #333; }
+
+.debug-log {
+  margin: 0;
+  padding: 8px 10px;
+  font: 11px/1.45 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-y: auto;
+  max-height: calc(60vh - 32px);
+  color: #0f0;
+  background: #000;
+}
 @media (max-width: 400px) {
   .player { padding: 20px 16px; }
   .artwork { font-size: 40px; }
