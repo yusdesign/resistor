@@ -22,6 +22,10 @@
 
 .lyrics-panel .header .icon-btn {
   height: 23px;
+  border-radius: 2px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s, transform 0.15s;
 }
 
 .lyrics-panel .content {
