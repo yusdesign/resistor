@@ -30,7 +30,7 @@ class SomaPlugin : Plugin() {
         val req = Request.Builder()
             .url(currentUrl)
             .header("User-Agent", "mpv 0.37.0")
-            .header("Icy-MetaData", "1")
+            // .header("Icy-MetaData", "1")
             .build()
         return client.newCall(req).execute().body!!.byteStream()
     }
