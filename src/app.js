@@ -168,7 +168,9 @@
     let currentSong = { artist: '', title: '' };
     let streamUrls = [];
     let currentStreamIndex = 0;
-
+    let lyricLines = [];
+    let activeLyricIdx = -1;
+    
     let settings = {
       darkMode: true,
       bufferSize: 30,
@@ -280,6 +282,64 @@
       }
     }
 
+    async function displayLyrics(artist, title) {
+      lyricsPanel.style.display = 'block';
+    
+      if (!IS_NATIVE) {
+        lyricsContent.innerHTML =
+          '<p style="color: var(--muted);">📱 Lyrics work only in the Android app.</p>';
+        return;
+      }
+    
+      lyricsContent.innerHTML = '🔍 Searching…';
+      const lyrics = await fetchLyrics(artist, title);
+    
+      if (!lyrics) {
+        lyricsContent.innerHTML = '📝 Lyrics unavailable for this track.';
+        lyricLines = [];
+        activeLyricIdx = -1;
+        return;
+      }
+    
+      const parsed = parseLrc(lyrics);
+      if (parsed) {
+        lyricLines = parsed;
+        lyricsContent.innerHTML = parsed
+          .map((l, i) => `<span class="line" data-idx="${i}">${l.text || '&nbsp;'}</span>`)
+          .join('');
+        activeLyricIdx = -1;
+        updateActiveLyric();  // set initial state based on current time
+      } else {
+        // plain lyrics — no timestamps, no highlighting
+        lyricLines = [];
+        activeLyricIdx = -1;
+        lyricsContent.innerHTML = lyrics
+          .split('\n').filter(Boolean)
+          .map(l => `<span class="line">${l}</span>`)
+          .join('');
+      }
+    }
+    
+    function updateActiveLyric() {
+      if (!lyricLines.length || !audio) return;
+      const t = audio.currentTime;
+      let idx = -1;
+      for (let i = 0; i < lyricLines.length; i++) {
+        if (lyricLines[i].time <= t) idx = i;
+        else break;
+      }
+      if (idx === activeLyricIdx) return;
+      activeLyricIdx = idx;
+    
+      const spans = lyricsContent.querySelectorAll('.line');
+      spans.forEach((s, i) => s.classList.toggle('active', i === idx));
+    
+      const active = spans[idx];
+      if (active && lyricsPanel.style.display === 'block') {
+        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+
     // ─── FETCH STREAM URLS FROM PLS ───
     async function fetchStreamUrls() {
       try {
@@ -356,7 +416,7 @@
     
         // ─── EVENT LISTENERS (native) ───
         let lastWaitingLogAt = 0;
-        
+
         audio.addEventListener('playing', () => {
           dbg('AUDIO', 'playing');
           isPlaying = true;
@@ -392,7 +452,9 @@
         audio.addEventListener('canplay', () => {
           dbg('AUDIO', 'canplay (ready to resume)');
         });
-        
+
+        audio.addEventListener('timeupdate', updateActiveLyric);
+
         audio.addEventListener('error', () => {
           const code = audio.error?.code;
           const msg = audio.error?.message;
