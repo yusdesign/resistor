@@ -2,7 +2,6 @@
   "appId": "com.resistor.app",
   "appName": "Resistor",
   "webDir": "dist",
-  "bundledWebRuntime": false,
   "server": {
     "androidScheme": "https",
     "cleartext": true
