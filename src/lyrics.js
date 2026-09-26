@@ -41,3 +41,18 @@ export async function fetchLyrics(artist, title) {
     return null;
   }
 }
+
+export function parseLrc(text) {
+  // returns [{ time: seconds, text: "line" }, ...] or null if not LRC
+  if (!text || !/^\[\d{2}:\d{2}/m.test(text)) return null;
+  const lines = [];
+  for (const raw of text.split('\n')) {
+    const m = raw.match(/^\[(\d{2}):(\d{2})(?:[.:](\d{2,3}))?\]\s?(.*)$/);
+    if (!m) continue;
+    const mm = parseInt(m[1], 10);
+    const ss = parseInt(m[2], 10);
+    const frac = m[3] ? parseInt(m[3], 10) / (m[3].length === 3 ? 1000 : 100) : 0;
+    lines.push({ time: mm * 60 + ss + frac, text: m[4] });
+  }
+  return lines.length ? lines : null;
+}
