@@ -20,6 +20,10 @@
   margin-bottom: 8px;
 }
 
+.lyrics-panel .header .icon-btn {
+  height: 23px;
+}
+
 .lyrics-panel .content {
   font-size: 14px;
   line-height: 1.8;
