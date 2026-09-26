@@ -95,13 +95,19 @@ body {
   fill: none;
 }
 .artwork {
-  font-size: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-bottom: 12px;
-  display: block;
+  min-height: 80px;
 }
+
 .artwork img {
-  scale: 0.55;
-  translate: -109px;
+  display: block;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: var(--radius);
 }
 .now-playing {
   margin-bottom: 16px;
@@ -392,6 +398,39 @@ body {
   transition: opacity 0.2s;
 }
 .settings-close-btn:hover { opacity: 0.8; }
+.setting-row.about-row {
+  display: block;
+  padding: 14px 0 4px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.about-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.about-version {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.about-note {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+.about-note a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.about-note a:hover {
+  text-decoration: underline;
+}
+.about-hint {
+  color: var(--playing);
+  opacity: 0.85;
+}
 /* ─── DEBUG PANEL ─── */
 .debug-panel {
   position: fixed;
