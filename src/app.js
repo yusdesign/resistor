@@ -4,8 +4,8 @@
     // ━━━━━━━━━━━━━━━━━
 
     // ─── IMPORTS ───
-    import { loadTracklist, saveTracklist, addTrack } from './src/tracklist.js';
-    import { loadLyricsCache, saveLyricsCache, fetchLyrics } from './src/lyrics.js';
+    import { loadTracklist, saveTracklist, addTrack } from '../src/tracklist.js';
+    import { loadLyricsCache, saveLyricsCache, fetchLyrics } from '../src/lyrics.js';
     import { Capacitor, registerPlugin } from '@capacitor/core';
 
     const Soma = registerPlugin('Soma');
