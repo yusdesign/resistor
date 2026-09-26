@@ -8,6 +8,8 @@
     import { loadLyricsCache, saveLyricsCache, fetchLyrics } from './lyrics.js';
 
     // ─── DEBUG LOGGER ───
+    const DEBUG = true;
+    const t0 = Date.now();
     const DEBUG_OVERLAY = true;
     const debugEl = document.getElementById('debugLog');
     if (DEBUG && DEBUG_OVERLAY && debugEl) {
