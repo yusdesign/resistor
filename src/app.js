@@ -79,6 +79,25 @@
     const IS_NATIVE = typeof window !== 'undefined'
       && !!window.Capacitor?.isNativePlatform?.();
     const Soma = IS_NATIVE ? window.Capacitor.Plugins.Soma : null;
+    if (!IS_NATIVE) {
+      dbg('DEMO', 'Resistor web preview');
+      dbg('DEMO', 'Native plugin not available in the browser.');
+      dbg('DEMO', 'Below is a simulated log of what the APK does.');
+      dbg('DEMO', '─────');
+      dbg('DEMO', 'SETUP  → Soma.start({ station: "indiepop" })');
+      dbg('DEMO', 'SETUP  → audio.src = "http://127.0.0.1:8765/?t=..."');
+      dbg('DEMO', 'AUDIO  → playing  (buffer 32 kbps AAC)');
+      dbg('DEMO', 'LOOP   → metadata polling every 20s');
+      dbg('DEMO', 'META   → GET somafm.com/songs/indiepop.json');
+      dbg('DEMO', 'META   → now playing: <artist> — <title>');
+      dbg('DEMO', 'META   → lyrics lookup via LRCLIB on demand');
+      dbg('DEMO', '─────');
+      dbg('DEMO', 'To hear the stream, install the Android APK.');
+      const btn = document.getElementById('debugToggle');
+      if (btn) btn.title = 'Demo log';
+      const title = document.getElementById('debugTitle');
+      if (title) title.textContent = 'Resistor — demo mode';
+    }
 
     // ─── CONFIG ───
     const PLS_URL = 'https://somafm.com/indiepop32.pls';
@@ -187,6 +206,10 @@
 
     // ─── METADATA FETCH ───
     async function fetchMetadata() {
+      if (!IS_NATIVE) {
+        dbg('META', '(demo) would fetch somafm.com/songs/indiepop.json');
+        return;
+      }
       dbg('META', 'fetch start');
       try {
         const response = await fetch('https://somafm.com/songs/indiepop.json', {
@@ -211,18 +234,22 @@
     // ─── LYRICS DISPLAY ───
     async function displayLyrics(artist, title) {
       lyricsPanel.style.display = 'block';
-      lyricsContent.innerHTML = '🔍 Searching...';
 
+      if (!IS_NATIVE) {
+        dbg('LYRICS', 'skipped — lyrics only available in the APK');
+        lyricsContent.innerHTML =
+          '<p style="color: var(--muted);">📱 Lyrics work only in the Android app.</p>';
+        return;
+      }
+    
+      lyricsContent.innerHTML = '🔍 Searching...';
+    
       const lyrics = await fetchLyrics(artist, title);
       if (lyrics) {
         const lines = lyrics.split('\n').filter(line => line.trim());
-        let html = '';
-        lines.forEach(line => {
-          html += `<span class="line">${line}</span>`;
-        });
-        lyricsContent.innerHTML = html;
+        lyricsContent.innerHTML = lines.map(l => `<span class="line">${l}</span>`).join('');
       } else {
-        lyricsContent.innerHTML = '📝 No lyrics found.';
+        lyricsContent.innerHTML = '📝 Lyrics unavailable for this track.';
       }
     }
 
@@ -379,27 +406,29 @@
     
         return audio;
       }
-    
+      if (!IS_NATIVE) {
       // WEB (browser) — SomaFM refuses browser requests.
       // Show an honest notice instead of retrying forever.
       // ─────────────────────────────────────────────
-      if (audio) {
-        audio.pause();
-        audio.src = '';
-        audio = null;
+        if (audio) {
+          audio.pause();
+          audio.src = '';
+          audio = null;
+        }
+        
+        dbg('SETUP', 'web branch — playback requires the Android app');
+        dbg('SETUP', 'reason: SomaFM blocks browser-originated requests (403)');
+        setStatus('📱 Playback requires the Android app', 'error');
+        isPlaying = false;
+        updateUI(false);
+        
+        const notice = document.getElementById('status');
+        if (notice) {
+          notice.title = 'SomaFM blocks browser-originated streams. Install the Android APK to listen.';
+        }
+        
+        return null;
       }
-      
-      dbg('SETUP', 'web branch — showing app-required notice');
-      setStatus('📱 Playback requires the Android app', 'error');
-      isPlaying = false;
-      updateUI(false);
-      
-      const notice = document.getElementById('status');
-      if (notice) {
-        notice.title = 'SomaFM blocks browser-originated streams. Install the Android APK to listen.';
-      }
-      
-      return null;
     }
 
     // ─── PLAYBACK ───
