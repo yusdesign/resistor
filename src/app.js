@@ -4,22 +4,15 @@
     // ━━━━━━━━━━━━━━━━━
 
     // ─── IMPORTS ───
-    import { loadTracklist, saveTracklist, addTrack } from '../src/tracklist.js';
-    import { loadLyricsCache, saveLyricsCache, fetchLyrics } from '../src/lyrics.js';
-    // top of app.js — no Capacitor import here
-    let Soma = null;
-    let IS_NATIVE = false;
+    // ─── IMPORTS ───
+    import { loadTracklist, saveTracklist, addTrack } from './tracklist.js';
+    import { loadLyricsCache, saveLyricsCache, fetchLyrics } from './lyrics.js';
     
-    async function initCapacitor() {
-      // capacitor is injected by the native bridge as window.Capacitor
-      if (window.Capacitor?.isNativePlatform?.()) {
-        const mod = await import('@capacitor/core');
-        Soma = mod.registerPlugin('Soma');
-        IS_NATIVE = true;
-      }
-    }
-    
-    await initCapacitor();
+    // ─── CAPACITOR DETECTION ───
+    // No import needed. 
+    const IS_NATIVE = typeof window !== 'undefined'
+      && !!window.Capacitor?.isNativePlatform?.();
+    const Soma = IS_NATIVE ? window.Capacitor.Plugins.Soma : null;
 
     // ─── CONFIG ───
     const PLS_URL = 'https://somafm.com/indiepop32.pls';
