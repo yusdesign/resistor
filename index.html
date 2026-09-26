@@ -565,6 +565,10 @@
     // ─── IMPORTS ───
     import { loadTracklist, saveTracklist, addTrack } from './src/tracklist.js';
     import { loadLyricsCache, saveLyricsCache, fetchLyrics } from './src/lyrics.js';
+    import { Capacitor, registerPlugin } from '@capacitor/core';
+
+    const Soma = registerPlugin('Soma');
+    const IS_NATIVE = Capacitor.isNativePlatform();
 
     // ─── CONFIG ───
     const PLS_URL = 'https://somafm.com/indiepop32.pls';
@@ -761,6 +765,35 @@
 
     // ─── AUDIO SETUP ───
     async function setupAudio() {
+      if (IS_NATIVE) {
+        await Soma.start({ station: 'indiepop' });
+        audio = new Audio();
+        audio.src = 'http://127.0.0.1:8765/';
+        audio.volume = parseFloat(volumeSlider.value);
+    
+        audio.addEventListener('playing', () => {
+          isPlaying = true;
+          updateUI(true);
+          setStatus('🎵 Playing', 'playing');
+          if (metadataTimer) clearInterval(metadataTimer);
+          metadataTimer = setInterval(fetchMetadata, 10000);
+          fetchMetadata();
+        });
+        audio.addEventListener('pause', () => {
+          isPlaying = false;
+          updateUI(false);
+          setStatus('⏸ Paused', '');
+          if (metadataTimer) { clearInterval(metadataTimer); metadataTimer = null; }
+        });
+        audio.addEventListener('error', () => {
+          setStatus('❌ Stream error', 'error');
+          isPlaying = false;
+          updateUI(false);
+        });
+    
+        return audio;
+      }
+      
       if (audio) {
         audio.pause();
         audio.src = '';
