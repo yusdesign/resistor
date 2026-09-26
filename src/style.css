@@ -100,8 +100,8 @@ body {
   display: block;
 }
 .artwork img {
-  style="scale: 0.75;
-  translate: -85px;"
+  scale: 0.55;
+  translate: -109px;
 }
 .now-playing {
   margin-bottom: 16px;
