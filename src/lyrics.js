@@ -14,32 +14,66 @@ export function saveLyricsCache() {
 }
 
 export async function fetchLyrics(artist, title) {
-  // Lyrics only make sense when we actually have a track playing —
-  // which only happens in the APK. On the web, skip entirely.
   const isNative = typeof window !== 'undefined'
     && !!window.Capacitor?.isNativePlatform?.();
   if (!isNative) return null;
 
   const cacheKey = `${artist} - ${title}`;
   if (lyricsCache[cacheKey]) return lyricsCache[cacheKey];
-
-  try {
-    const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
-    const response = await fetch(url);
-    if (response.ok) {
-      const data = await response.json();
-      const lyrics = data.syncedLyrics || data.plainLyrics || null;
-      if (lyrics) {
-        lyricsCache[cacheKey] = lyrics;
-        saveLyricsCache();
-        return lyrics;
-      }
-    }
-    return null;
-  } catch (e) {
-    console.debug('Lyrics fetch error:', e.message);
+  if (lyricsMisses[cacheKey] && Date.now() - lyricsMisses[cacheKey] < MISS_TTL_MS) {
     return null;
   }
+  if (Date.now() < rateLimitedUntil) return null;
+
+  let response;
+  try {
+    const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
+    response = await fetch(url);
+  } catch (e) {
+    lyricsMisses[cacheKey] = Date.now();
+    saveMisses();
+    return null;
+  }
+
+  // 503 — server is at its concurrent-load limit. Back off globally.
+  if (response.status === 503) {
+    const retryAfter = parseInt(response.headers.get('retry-after') || '60', 10);
+    rateLimitedUntil = Date.now() + retryAfter * 1000;
+    return null;
+  }
+
+  // 404 — track genuinely not in the DB. Cache as a miss.
+  if (response.status === 404) {
+    lyricsMisses[cacheKey] = Date.now();
+    saveMisses();
+    return null;
+  }
+
+  if (!response.ok) {
+    // 400, 5xx other than 503 — transient, don't cache
+    return null;
+  }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch (e) {
+    lyricsMisses[cacheKey] = Date.now();
+    saveMisses();
+    return null;
+  }
+
+  // 200 with instrumental: true → both fields null. Cache as miss.
+  const lyrics = data.syncedLyrics || data.plainLyrics || null;
+  if (lyrics) {
+    lyricsCache[cacheKey] = lyrics;
+    saveLyricsCache();
+    return lyrics;
+  }
+
+  lyricsMisses[cacheKey] = Date.now();
+  saveMisses();
+  return null;
 }
 
 export function parseLrc(text) {
