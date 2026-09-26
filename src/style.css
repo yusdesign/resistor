@@ -99,6 +99,10 @@ body {
   margin-bottom: 12px;
   display: block;
 }
+.artwork img {
+  style="scale: 0.75;
+  translate: -85px;"
+}
 .now-playing {
   margin-bottom: 16px;
   min-height: 72px;
