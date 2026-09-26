@@ -765,10 +765,21 @@
 
     // ─── AUDIO SETUP ───
     async function setupAudio() {
+      // ─────────────────────────────────────────────
+      // NATIVE (Capacitor APK) — talk to SomaPlugin
+      // ─────────────────────────────────────────────
       if (IS_NATIVE) {
         await Soma.start({ station: 'indiepop' });
+    
+        if (audio) {
+          audio.pause();
+          audio.src = '';
+          audio = null;
+        }
+    
         audio = new Audio();
-        audio.src = 'http://127.0.0.1:8765/';
+        // cache-buster — forces a fresh connection on each setup
+        audio.src = 'http://127.0.0.1:8765/?t=' + Date.now();
         audio.volume = parseFloat(volumeSlider.value);
     
         audio.addEventListener('playing', () => {
@@ -779,61 +790,86 @@
           metadataTimer = setInterval(fetchMetadata, 10000);
           fetchMetadata();
         });
+    
         audio.addEventListener('pause', () => {
           isPlaying = false;
           updateUI(false);
           setStatus('⏸ Paused', '');
           if (metadataTimer) { clearInterval(metadataTimer); metadataTimer = null; }
         });
+    
         audio.addEventListener('error', () => {
-          setStatus('❌ Stream error', 'error');
-          isPlaying = false;
-          updateUI(false);
+          // transient hiccup? try to reconnect, don't flip the UI to error yet
+          if (settings.autoReconnect && isPlaying) {
+            setStatus('⟳ Reconnecting…', 'buffering');
+            setTimeout(() => {
+              if (!audio) return;
+              audio.src = 'http://127.0.0.1:8765/?t=' + Date.now();
+              audio.play().catch(() => {
+                setStatus('❌ Stream error', 'error');
+                isPlaying = false;
+                updateUI(false);
+              });
+            }, 1500);
+          } else {
+            setStatus('❌ Stream error', 'error');
+            isPlaying = false;
+            updateUI(false);
+          }
         });
+    
+        try {
+          await audio.play();
+        } catch (e) {
+          console.warn('Native play failed:', e.message);
+          setStatus('⚠️ Play error', 'error');
+        }
     
         return audio;
       }
-      
+    
+      // ─────────────────────────────────────────────
+      // WEB (browser) — original ice-server path
+      // ─────────────────────────────────────────────
       if (audio) {
         audio.pause();
         audio.src = '';
         audio = null;
       }
-
+    
       if (streamUrls.length === 0) {
         streamUrls = await fetchStreamUrls();
         currentStreamIndex = 0;
       }
-
+    
       // Try the current stream, fallback to next if it fails
       let success = false;
       for (let i = currentStreamIndex; i < streamUrls.length; i++) {
         try {
           const url = streamUrls[i];
-          console.log(`📡 Trying stream ${i+1}/${streamUrls.length}: ${url}`);
+          console.log(`📡 Trying stream ${i + 1}/${streamUrls.length}: ${url}`);
           audio = new Audio();
           audio.src = url;
           audio.crossOrigin = 'anonymous';
           audio.preload = 'metadata';
           audio.setAttribute('decoding', 'async');
           audio.volume = parseFloat(volumeSlider.value);
-
-          // Test if the stream is playable
+    
           await audio.play();
           currentStreamIndex = i;
           success = true;
           break;
         } catch (e) {
-          console.warn(`Stream ${i+1} failed:`, e.message);
+          console.warn(`Stream ${i + 1} failed:`, e.message);
           continue;
         }
       }
-
+    
       if (!success) {
         setStatus('❌ All streams failed', 'error');
         return null;
       }
-
+    
       // ─── EVENT LISTENERS ───
       audio.addEventListener('playing', () => {
         isPlaying = true;
@@ -843,34 +879,33 @@
         metadataTimer = setInterval(fetchMetadata, 10000);
         fetchMetadata();
       });
-
+    
       audio.addEventListener('pause', () => {
         isPlaying = false;
         updateUI(false);
         setStatus('⏸ Paused', '');
         if (metadataTimer) { clearInterval(metadataTimer); metadataTimer = null; }
       });
-
+    
       audio.addEventListener('error', (e) => {
         console.error('Audio error:', e);
-        setStatus('❌ Stream error. Trying next...', 'error');
         isPlaying = false;
         updateUI(false);
-        // Try the next stream in the list
+    
         if (currentStreamIndex < streamUrls.length - 1) {
           currentStreamIndex++;
-          setTimeout(() => {
-            if (audio) {
-              setupAudio().then(() => {
-                if (isPlaying) audio.play();
-              });
+          setStatus(`❌ Stream error. Trying stream ${currentStreamIndex + 1}/${streamUrls.length}…`, 'error');
+          setTimeout(async () => {
+            await setupAudio();
+            if (audio && settings.autoReconnect) {
+              audio.play().catch(() => setStatus('❌ Play failed', 'error'));
             }
           }, 3000);
         } else {
           setStatus('❌ All streams exhausted', 'error');
         }
       });
-
+    
       return audio;
     }
 
