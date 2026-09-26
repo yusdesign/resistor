@@ -603,6 +603,7 @@
 
     // ─── STATE ───
     let isPlaying = false;
+    let reconnectAttempts = 0;
     let audio = null;
     let metadataTimer = null;
     let isTracklistOpen = false;
@@ -756,10 +757,35 @@
         console.error('Failed to fetch PLS:', e.message);
         // Fallback to known working HTTPS URLs
         return [
+          'https://ice5.somafm.com/indiepop-32-aac',
           'https://ice2.somafm.com/indiepop-32-aac',
-          'https://ice4.somafm.com/indiepop-32-aac',
           'https://ice6.somafm.com/indiepop-32-aac'
         ];
+      }
+    }
+
+    // SETMETADATA
+    function startMetadataLoop() {
+      if (metadataTimer) clearTimeout(metadataTimer);
+      const tick = async () => {
+        if (!isPlaying) {
+          metadataTimer = setTimeout(tick, 5000);
+          return;
+        }
+        try {
+          await fetchMetadata();
+          metadataTimer = setTimeout(tick, 20000);
+        } catch (e) {
+          metadataTimer = setTimeout(tick, 60000);
+        }
+      };
+      metadataTimer = setTimeout(tick, 1000);
+    }
+    
+    function stopMetadataLoop() {
+      if (metadataTimer) {
+        clearTimeout(metadataTimer);
+        metadataTimer = null;
       }
     }
 
@@ -784,33 +810,35 @@
     
         audio.addEventListener('playing', () => {
           isPlaying = true;
+          reconnectAttempts = 0;
           updateUI(true);
           setStatus('🎵 Playing', 'playing');
-          if (metadataTimer) clearInterval(metadataTimer);
-          metadataTimer = setInterval(fetchMetadata, 10000);
-          fetchMetadata();
+          stopMetadataLoop();
+          startMetadataLoop();
         });
     
         audio.addEventListener('pause', () => {
           isPlaying = false;
           updateUI(false);
           setStatus('⏸ Paused', '');
-          if (metadataTimer) { clearInterval(metadataTimer); metadataTimer = null; }
+          stopMetadataLoop();
         });
     
         audio.addEventListener('error', () => {
-          // transient hiccup? try to reconnect, don't flip the UI to error yet
-          if (settings.autoReconnect && isPlaying) {
-            setStatus('⟳ Reconnecting…', 'buffering');
+          if (settings.autoReconnect && isPlaying && reconnectAttempts < 3) {
+            reconnectAttempts++;
+            setStatus(`⟳ Reconnecting… (${reconnectAttempts}/3)`, 'buffering');
             setTimeout(() => {
               if (!audio) return;
               audio.src = 'http://127.0.0.1:8765/?t=' + Date.now();
               audio.play().catch(() => {
-                setStatus('❌ Stream error', 'error');
-                isPlaying = false;
-                updateUI(false);
+                if (reconnectAttempts >= 3) {
+                  setStatus('❌ Stream error', 'error');
+                  isPlaying = false;
+                  updateUI(false);
+                }
               });
-            }, 1500);
+            }, 1500 * reconnectAttempts);   // backoff: 1.5s, 3s, 4.5s
           } else {
             setStatus('❌ Stream error', 'error');
             isPlaying = false;
@@ -875,8 +903,8 @@
         isPlaying = true;
         updateUI(true);
         setStatus('🎵 Playing', 'playing');
-        if (metadataTimer) clearInterval(metadataTimer);
-        metadataTimer = setInterval(fetchMetadata, 10000);
+        stopMetadataLoop();
+        startMetadataLoop();
         fetchMetadata();
       });
     
@@ -884,13 +912,14 @@
         isPlaying = false;
         updateUI(false);
         setStatus('⏸ Paused', '');
-        if (metadataTimer) { clearInterval(metadataTimer); metadataTimer = null; }
+        stopMetadataLoop();
       });
     
       audio.addEventListener('error', (e) => {
         console.error('Audio error:', e);
         isPlaying = false;
         updateUI(false);
+        stopMetadataLoop();
     
         if (currentStreamIndex < streamUrls.length - 1) {
           currentStreamIndex++;
@@ -918,6 +947,7 @@
       if (isPlaying) {
         audio.pause();
       } else {
+        reconnectAttempts = 0;
         try {
           await audio.play();
         } catch (e) {
