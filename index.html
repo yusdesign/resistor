@@ -9,6 +9,19 @@
 <body>
   <!-- ─── SVG SPRITE (INLINE) ─── -->
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
+    <symbol id="resistor" viewBox="0 0 24 24">
+      <path d="m8.3 12.6 4.24-4.24 3.18 3.18-4.27 4.22z" fill="#a91b34" style="paint-order:stroke fill markers"/>
+    	<path d="m11.2 9.84c0.0159 1.41 1.1 2.58 3.07 3.42" fill="none" stroke="#ffcb2f" stroke-miterlimit="0" stroke-width=".998"/>
+    	<path d="m10 11.1c0.0848 1.64 2.48 3.25 3.03 3.42" fill="none" stroke="#ffcb2f" stroke-miterlimit="0" stroke-width=".998"/>
+    	<path d="m7.24 12.5 4.23 4.25z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="0" stroke-width="2"/>
+    	<path d="m12.6 7.22 4.24 4.24z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="0" stroke-width="2"/>
+    	<path d="m11.5 16.8c-0.0159-1.1 4.08-5.14 5.3-5.3" fill="none" stroke="#000" stroke-miterlimit="0" stroke-width=".998"/>
+    	<path d="m13 7.21c0.0159 1.1-4.08 5.14-5.3 5.3" fill="none" stroke="#000" stroke-miterlimit="0" stroke-width=".998"/>
+    	<path d="m17 7.04-2.88 2.88z" fill="none" stroke="#000" stroke-miterlimit="0"/>
+    	<path d="m9.89 14.1-2.88 2.88z" fill="none" stroke="#000" stroke-miterlimit="0"/>
+    	<path d="m19.1 6.26a1.26 1.26 0 0 1-1.26 1.26 1.26 1.26 0 0 1-1.26-1.26 1.26 1.26 0 0 1 1.26-1.26 1.26 1.26 0 0 1 1.26 1.26z" fill="none" stroke="#000" style="paint-order:stroke fill markers"/>
+    	<path d="m7.34 17.8a1.26 1.26 0 0 1-1.26 1.26 1.26 1.26 0 0 1-1.26-1.26 1.26 1.26 0 0 1 1.26-1.26 1.26 1.26 0 0 1 1.26 1.26z" fill="none" stroke="#000" style="paint-order:stroke fill markers"/>
+    </symbol>
     <symbol id="play-icon" viewBox="0 0 24 24">
       <rect x="2.9091" y="2.9091" width="18.182" height="18.182" rx="1.0909" ry="1.0909" style="fill:none;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2;stroke:var(--text)"/>
       <path d="m 9.2920256,8.0000997 6.2905054,4.0000003 -6.2905054,4 z" style="fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"/>
@@ -19,22 +32,20 @@
       <path d="M 14.081264,8.0000997 V 16.0001 Z" style="fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0"/>
     </symbol>
     <symbol id="lyrics-icon" viewBox="0 0 24 24">
-      <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:0;stroke-opacity:1" d="m 6,6 1,3 c 0,0 -1,2 -1,4 0,3 2,4 6,4 4,0 6,-1 6,-4 0,-2 -1,-4 -1,-4 l 1,-3"/>
-      <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:butt;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 9.5,19 V 5"/>
-      <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:butt;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 12,20 V 4"/>
-      <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:butt;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 14.5,19 V 5"/>
-      <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:butt;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 5.0576687,9 H 19"/>
+      <path d="m3.43 3.43 1.43 4.29s-1.43 2.86-1.43 5.71c0 4.29 2.86 5.71 8.57 5.71 5.71 0 8.57-1.43 8.57-5.71 0-2.86-1.43-5.71-1.43-5.71l1.43-4.29" fill="none" stroke="#000" stroke-miterlimit="0" stroke-width="2"/>
+    	<path d="m8.5 21v-17.6" fill="none" stroke="#000" stroke-miterlimit="0"/>
+    	<path d="m12 22v-20" fill="none" stroke="#000" stroke-miterlimit="0"/>
+    	<path d="m15.5 21v-17.6" fill="none" stroke="#000" stroke-miterlimit="0"/>
+    	<path d="m2 7.5h20" fill="none" stroke="#000" stroke-miterlimit="0"/>
     </symbol>
     <symbol id="tracklist-icon" viewBox="0 0 24 24">
-      <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 9,19 V 5"/>
-      <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 19,15 H 5"/>
-      <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 5,17 5,7 A 2,2 135 0 1 7,5 l 10,0 a 2,2 45 0 1 2,2 l 0,10 a 2,2 135 0 1 -2,2 L 7,19 A 2,2 45 0 1 5,17 Z"/>
-      <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 19,11.5 H 5"/>
-      <path style="opacity:1;fill:none;stroke:var(--text);stroke-width:1;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:0;stroke-dasharray:none;stroke-opacity:1" d="M 19,8 H 5"/>
+      <path d="m9.5 19.5v-15.1" fill="none" stroke="#000" stroke-linecap="square" stroke-linejoin="bevel" stroke-miterlimit="0" stroke-width=".961"/>
+    	<path d="m19.5 14.5h-15.1" fill="none" stroke="#000" stroke-linecap="square" stroke-linejoin="bevel" stroke-miterlimit="0" stroke-width=".961"/>
+    	<path d="m3 18.4v-12.9a2.57 2.57 0 0 1 2.57-2.57h12.9a2.57 2.57 0 0 1 2.57 2.57v12.9a2.57 2.57 0 0 1-2.57 2.57h-12.9a2.57 2.57 0 0 1-2.57-2.57z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="0" stroke-width="2.06"/>
+    	<path d="m19.5 8.5h-15" fill="none" stroke="#000" stroke-linecap="square" stroke-linejoin="bevel" stroke-miterlimit="0" stroke-width=".982"/>
     </symbol>
-    <symbol id="social-icon" viewBox="0 0 20 20">
-      <path fill="none" stroke="var(--text)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M12.5 6.667a4.167 4.167 0 1 0-8.334 0 4.167 4.167 0 0 0 8.334 0"/>
-      <path fill="none" stroke="var(--text)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="M2.5 16.667a5.833 5.833 0 0 1 8.75-5.053m3.837.474.513 1.035c.07.144.257.282.414.309l.93.155c.596.1.736.536.307.965l-.723.73a.64.64 0 0 0-.152.531l.207.903c.164.715-.213.991-.84.618l-.872-.52a.63.63 0 0 0-.577 0l-.872.52c-.624.373-1.003.094-.84-.618l.207-.903a.64.64 0 0 0-.152-.532l-.723-.729c-.426-.43-.289-.864.306-.964l.93-.156a.64.64 0 0 0 .412-.31l.513-1.034c.28-.562.735-.562 1.012 0"/>
+    <symbol id="heart-icon" viewBox="0 0 24 24">
+      <path d="m7 4.75c3 0 5 3.12 5 3.12s2-3.12 5-3.12 4 3 4 5c0 6-9 10.2-9 10.2s-9-4.25-9-10.2c0-2 1-5 4-5z" fill="none" stroke="#000" stroke-width="2" style="paint-order:stroke fill markers"/>
     </symbol>
     <symbol id="documentation-icon" viewBox="0 0 21 20">
       <path fill="none" stroke="var(--text)" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.35" d="m15.5 13.333 1.533 1.322c.645.555.967.833.967 1.178s-.322.623-.967 1.179L15.5 18.333m-3.333-5-1.534 1.322c-.644.555-.966.833-.966 1.178s.322.623.966 1.179l1.534 1.321"/>
@@ -47,14 +58,14 @@
       <path d="m16 8-8 8" style="fill:none;stroke:var(--text);stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:0;stroke-width:2"/>
     </symbol>
     <symbol id="settings-icon" viewBox="0 0 24 24">
-      <path id="path1" style="opacity:1;fill:var(--text);stroke:none;" d="m 5,16.043457 7,4.040039 7,-4.040039 V 7.9565429 L 12,3.916504 5,7.9565429 Z M 6.2270704,12.000993 9.114395,7 14.886355,7.0006869 17.772929,11.999007 14.885605,17 9.1136453,16.999313 Z" />
+      <path d="m1.61 14.8 7.61 7.6 10.4-2.78 2.79-10.4-7.61-7.6-10.4 2.78zm4.33-4.41 4.44-4.44 6.06 1.62 1.62 6.06-4.44 4.44-6.06-1.62z"/>
     </symbol>
   </svg>
 
   <div class="player" id="app">
     <!-- ─── HEADER ─── -->
     <div class="header">
-      <h1><svg viewBox="0 0 24 24"><use href="#resistor-icon"/></svg> Resistor</h1>
+      <h1><svg viewBox="0 0 24 24"><use href="#resistor"/></svg> Resistor</h1>
       <div class="header-actions">
         <button class="icon-btn" id="tracklistToggle" title="Tracklist" aria-label="Toggle tracklist">
           <svg viewBox="0 0 24 24"><use href="#tracklist-icon"/></svg>
@@ -71,8 +82,8 @@
     </span>
 
     <div class="now-playing" id="nowPlaying" title="Click to copy track info">
-      <h2 id="title">Resistor</h2>
-      <p class="artist" id="artist">SomaFM Indie Pop</p>
+      <h2 id="title">Resistor: Track Name</h2>
+      <p class="artist" id="artist">SomaFM Indie Pop Rocks!</p>
     </div>
 
     <button class="play-btn" id="playBtn" aria-label="Play / Pause">
@@ -84,13 +95,13 @@
         <svg viewBox="0 0 24 24"><use href="#lyrics-icon"/></svg>
       </button>
       <button class="icon-btn" id="toggleDedicationBtn" title="Elise Mode" aria-label="Toggle Elise Mode">
-        <svg viewBox="0 0 24 24"><use href="#social-icon"/></svg>
+        <svg viewBox="0 0 24 24"><use href="#heart-icon"/></svg>
       </button>
     </div>
 
     <div class="station-info">
-      <span class="badge" id="stationBadge">SomaFM</span>
-      <span class="badge accent">32k AAC</span>
+      <span class="badge" id="stationBadge">● Indie</span>
+      <span class="badge accent">● 32k AAC</span>
       <span class="badge playing-badge" id="liveBadge">● Live</span>
     </div>
 
@@ -141,6 +152,23 @@
       <div class="setting-row">
         <label for="eliseModeToggle">❤️ Elise Mode</label>
         <input type="checkbox" id="eliseModeToggle">
+      </div>
+      <div class="setting-row about-row">
+        <div class="about-title">Resistor v1.0</div>
+        <div class="about-version">Resistor app is far SomaFM Indie Pop Rocks · 32 kbps AAC</div>
+        <div class="about-note">
+          Lightweight streaming runs through a local plugin because SomaFM blocks
+          browser-originated requests. Live "Now-playing" data comes from
+          <a href="https://somafm.com" target="_blank" rel="noopener">somafm.com</a>,
+          and a lyrics from <a href="https://lrclib.net" target="_blank" rel="noopener">LRCLIB</a>.
+
+          Player created especially for lightweight mobile stream,
+          made by yusdesign.github.com
+        </div>
+        <div class="about-note about-hint">
+          On Honor, Xiaomi, Huawei, Oppo, and Vivo devices, disable battery
+          optimization for Resistor, or playback will stop when the screen is off.
+        </div>
       </div>
       <button class="settings-close-btn" id="closeSettings">Close</button>
     </div>
