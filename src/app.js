@@ -1,20 +1,29 @@
 // ━━━━━━━━━━━━━━━━━
-    //  RESISTOR RADIO 
-    //  SomaFM Indie Pop
-    // ━━━━━━━━━━━━━━━━━
+//  RESISTOR RADIO 
+//  SomaFM Indie Pop
+// ━━━━━━━━━━━━━━━━━
 
-    // ─── IMPORTS ───
     // ─── IMPORTS ───
     import { loadTracklist, saveTracklist, addTrack } from './tracklist.js';
     import { loadLyricsCache, saveLyricsCache, fetchLyrics } from './lyrics.js';
 
     // ─── DEBUG LOGGER ───
-    const DEBUG = true;
-    const t0 = Date.now();
+    const DEBUG_OVERLAY = true;
+    const debugEl = document.getElementById('debugLog');
+    if (DEBUG && DEBUG_OVERLAY && debugEl) {
+      debugEl.style.display = 'block';
+    }
     function dbg(tag, ...args) {
       if (!DEBUG) return;
       const ms = String(Date.now() - t0).padStart(6, ' ');
-      console.log(`[${ms}ms] ${tag}`, ...args);
+      const line = `[${ms}ms] ${tag} ${args.map(a =>
+        typeof a === 'object' ? JSON.stringify(a) : String(a)
+      ).join(' ')}`;
+      console.log(line);
+      if (debugEl) {
+        debugEl.textContent += line + '\n';
+        debugEl.scrollTop = debugEl.scrollHeight;
+      }
     }
     
     // ─── CAPACITOR DETECTION ───
