@@ -61,6 +61,23 @@ class SomaPlugin : Plugin() {
         call.resolve()
     }
 
+    @PluginMethod
+    fun lyricsCacheGet(call: PluginCall) {
+        val key = call.getString("key") ?: return call.reject("missing key")
+        val prefs = context.getSharedPreferences("resistor_lyrics", 0)
+        val value = prefs.getString(key, null)
+        call.resolve(JSObject().put("value", value))
+    }
+    
+    @PluginMethod
+    fun lyricsCachePut(call: PluginCall) {
+        val key = call.getString("key") ?: return call.reject("missing key")
+        val value = call.getString("value") ?: return call.reject("missing value")
+        val prefs = context.getSharedPreferences("resistor_lyrics", 0)
+        prefs.edit().putString(key, value).apply()
+        call.resolve()
+    }
+
     /**
      * An InputStream that transparently re-opens the upstream connection
      * when SomaFM rotates it. From NanoHTTPD's point of view it's one
