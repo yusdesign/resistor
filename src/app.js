@@ -4,7 +4,7 @@
 
     // ─── IMPORTS ───
     import { loadTracklist, saveTracklist, addTrack } from './tracklist.js';
-    import { loadLyricsCache, saveLyricsCache, fetchLyrics } from './lyrics.js';
+    import { loadLyricsCache, saveLyricsCache, fetchLyrics, parseLrc } from './lyrics.js';
     
     // ─── BUILD INFO ───
     import pkg from '../package.json' with { type: 'json' };
@@ -263,6 +263,7 @@
     // ─── LYRICS DISPLAY ───
     async function displayLyrics(artist, title) {
       lyricsPanel.style.display = 'block';
+      lyricsContent.innerHTML = '🔍 Searching…';
     
       if (!IS_NATIVE) {
         lyricsContent.innerHTML =
@@ -270,13 +271,13 @@
         return;
       }
     
-      lyricsContent.innerHTML = '🔍 Searching…';
-      const lyrics = await fetchLyrics(artist, title);
+      const lyrics = await Promise.race([
+        fetchLyrics(artist, title),
+        new Promise(resolve => setTimeout(() => resolve(null), 8000)),
+      ]);
     
       if (!lyrics) {
         lyricsContent.innerHTML = '📝 Lyrics unavailable for this track.';
-        lyricLines = [];
-        activeLyricIdx = -1;
         return;
       }
     
@@ -287,11 +288,8 @@
           .map((l, i) => `<span class="line" data-idx="${i}">${l.text || '&nbsp;'}</span>`)
           .join('');
         activeLyricIdx = -1;
-        updateActiveLyric();  // set initial state based on current time
+        updateActiveLyric();
       } else {
-        // plain lyrics — no timestamps, no highlighting
-        lyricLines = [];
-        activeLyricIdx = -1;
         lyricsContent.innerHTML = lyrics
           .split('\n').filter(Boolean)
           .map(l => `<span class="line">${l}</span>`)
