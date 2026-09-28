@@ -13,12 +13,12 @@ import okhttp3.Request
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
 
-companion object {
-    private const val PREFS_NAME = "resistor_lyrics"
-}
-
 @CapacitorPlugin(name = "Soma")
 class SomaPlugin : Plugin() {
+
+    companion object {
+        private const val PREFS_NAME = "resistor_lyrics"
+    }
 
     private var server: NanoHTTPD? = null
 
