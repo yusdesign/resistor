@@ -3,6 +3,8 @@ package com.resistor.app
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
+import com.getcapacitor.JSObject
+import com.getcapacitor.JSArray
 import com.getcapacitor.annotation.CapacitorPlugin
 import fi.iki.elonen.NanoHTTPD
 import okhttp3.ConnectionPool
@@ -10,6 +12,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
+
+companion object {
+    private const val PREFS_NAME = "resistor_lyrics"
+}
 
 @CapacitorPlugin(name = "Soma")
 class SomaPlugin : Plugin() {
@@ -64,7 +70,7 @@ class SomaPlugin : Plugin() {
     @PluginMethod
     fun lyricsCacheGet(call: PluginCall) {
         val key = call.getString("key") ?: return call.reject("missing key")
-        val prefs = context.getSharedPreferences("resistor_lyrics", 0)
+        val prefs = context.getSharedPreferences(PREFS_NAME, 0)
         val value = prefs.getString(key, null)
         call.resolve(JSObject().put("value", value))
     }
@@ -73,8 +79,31 @@ class SomaPlugin : Plugin() {
     fun lyricsCachePut(call: PluginCall) {
         val key = call.getString("key") ?: return call.reject("missing key")
         val value = call.getString("value") ?: return call.reject("missing value")
-        val prefs = context.getSharedPreferences("resistor_lyrics", 0)
+        val prefs = context.getSharedPreferences(PREFS_NAME, 0)
         prefs.edit().putString(key, value).apply()
+        call.resolve()
+    }
+    
+    @PluginMethod
+    fun lyricsCacheDelete(call: PluginCall) {
+        val key = call.getString("key") ?: return call.reject("missing key")
+        val prefs = context.getSharedPreferences(PREFS_NAME, 0)
+        prefs.edit().remove(key).apply()
+        call.resolve()
+    }
+    
+    @PluginMethod
+    fun lyricsCacheKeys(call: PluginCall) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, 0)
+        val arr = JSArray()
+        for (k in prefs.all.keys) arr.put(k)
+        call.resolve(JSObject().put("keys", arr))
+    }
+    
+    @PluginMethod
+    fun lyricsCacheClear(call: PluginCall) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, 0)
+        prefs.edit().clear().apply()
         call.resolve()
     }
 
