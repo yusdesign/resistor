@@ -4,7 +4,7 @@
 
     // ─── IMPORTS ───
     import { loadTracklist, saveTracklist, addTrack } from './tracklist.js';
-    import { loadLyricsCache, saveLyricsCache, fetchLyrics, parseLrc } from './lyrics.js';
+    import { loadLyricsCache, saveLyricsCache, fetchLyrics, parseLrc, setLyricsDebugger } from './lyrics.js';
     
     // ─── BUILD INFO ───
     import pkg from '../package.json' with { type: 'json' };
@@ -55,6 +55,9 @@
         debugEl.scrollTop = debugEl.scrollHeight;
       }
     }
+
+    // wire the logger into lyrics.js
+    setLyricsDebugger(dbg);
     
     // ─── PANEL BEHAVIOR ───
     if (debugToggle && debugPanel) {
@@ -262,6 +265,7 @@
 
     // ─── LYRICS DISPLAY ───
     async function displayLyrics(artist, title) {
+      dbg('LYRICS', 'displayLyrics called', artist, '-', title);
       lyricsPanel.style.display = 'block';
       lyricsContent.innerHTML = '🔍 Searching…';
     
@@ -271,29 +275,38 @@
         return;
       }
     
-      const lyrics = await Promise.race([
-        fetchLyrics(artist, title),
-        new Promise(resolve => setTimeout(() => resolve(null), 8000)),
-      ]);
+      try {
+        dbg('LYRICS', 'calling fetchLyrics');
+        const lyrics = await Promise.race([
+          fetchLyrics(artist, title),
+          new Promise(resolve => setTimeout(() => resolve(null), 8000)),
+        ]);
+        dbg('LYRICS', 'fetchLyrics returned:', lyrics ? `${lyrics.length} chars` : 'null');
     
-      if (!lyrics) {
+        if (!lyrics) {
+          lyricsContent.innerHTML = '📝 Lyrics unavailable for this track.';
+          return;
+        }
+    
+        const parsed = parseLrc(lyrics);
+        dbg('LYRICS', 'parseLrc:', parsed ? `${parsed.length} lines` : 'not LRC');
+    
+        if (parsed) {
+          lyricLines = parsed;
+          lyricsContent.innerHTML = parsed
+            .map((l, i) => `<span class="line" data-idx="${i}">${l.text || '&nbsp;'}</span>`)
+            .join('');
+          activeLyricIdx = -1;
+          updateActiveLyric();
+        } else {
+          lyricsContent.innerHTML = lyrics
+            .split('\n').filter(Boolean)
+            .map(l => `<span class="line">${l}</span>`)
+            .join('');
+        }
+      } catch (e) {
+        dbg('LYRICS', 'displayLyrics threw:', e.name, e.message);
         lyricsContent.innerHTML = '📝 Lyrics unavailable for this track.';
-        return;
-      }
-    
-      const parsed = parseLrc(lyrics);
-      if (parsed) {
-        lyricLines = parsed;
-        lyricsContent.innerHTML = parsed
-          .map((l, i) => `<span class="line" data-idx="${i}">${l.text || '&nbsp;'}</span>`)
-          .join('');
-        activeLyricIdx = -1;
-        updateActiveLyric();
-      } else {
-        lyricsContent.innerHTML = lyrics
-          .split('\n').filter(Boolean)
-          .map(l => `<span class="line">${l}</span>`)
-          .join('');
       }
     }
     
