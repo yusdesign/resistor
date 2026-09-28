@@ -5,6 +5,7 @@ export function setLyricsDebugger(fn) {
 
 // ─── LYRICS CORE ───
 const LYRICS_CACHE_KEY = 'resistor_lyrics_cache';
+const LYRICS_CACHE_MAX = 500;   // ~500 tracks × ~2 KB = ~1 MB
 
 let lyricsCache = {};
 let rateLimitedUntil = 0;
@@ -18,7 +19,14 @@ export function loadLyricsCache() {
   return lyricsCache;
 }
 
-export function saveLyricsCache() {
+function saveLyricsCache() {
+  const keys = Object.keys(lyricsCache);
+  if (keys.length > LYRICS_CACHE_MAX) {
+    // LRU-ish: drop the oldest half. Since we don't track access times,
+    // approximate by dropping in insertion order (JS objects preserve it).
+    const toDrop = keys.slice(0, keys.length - LYRICS_CACHE_MAX);
+    for (const k of toDrop) delete lyricsCache[k];
+  }
   localStorage.setItem(LYRICS_CACHE_KEY, JSON.stringify(lyricsCache));
 }
 
