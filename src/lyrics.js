@@ -1,3 +1,8 @@
+let dbg = () => {};
+export function setLyricsDebugger(fn) {
+  dbg = fn;
+}
+
 // ─── LYRICS CORE ───
 const LYRICS_CACHE_KEY = 'resistor_lyrics_cache';
 
