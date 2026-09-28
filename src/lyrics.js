@@ -29,11 +29,22 @@ async function tryLrclib(artist, title) {
   let response;
   try {
     const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
-    response = await fetch(url);
-  } catch {
+    response = await fetch(url, {
+      headers: {
+        'X-User-Agent': 'Resistor v1.0 (https://github.com/yusdesign/resistor)',
+      },
+    });
+  } catch (e) {
     return null;
   }
 
+  // Rate limited
+  if (response.status === 429) {
+    const retryAfter = parseInt(response.headers.get('retry-after') || '60', 10);
+    rateLimitedUntil = Date.now() + retryAfter * 1000;
+    return null;
+  }
+  // Server congestion
   if (response.status === 503) {
     const retryAfter = parseInt(response.headers.get('retry-after') || '60', 10);
     rateLimitedUntil = Date.now() + retryAfter * 1000;
