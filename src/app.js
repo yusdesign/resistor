@@ -23,10 +23,7 @@
     const IS_NATIVE = typeof window !== 'undefined'
       && !!window.Capacitor?.isNativePlatform?.();
     const Soma = IS_NATIVE ? window.Capacitor.Plugins.Soma : null;
-
-    setLyricsDebugger(dbg);
-    setLyricsNative(IS_NATIVE, Soma);
-    
+  
     // ─── DEBUG LOGGER ───
     const DEBUG = true;
     const t0 = Date.now();
@@ -62,6 +59,7 @@
 
     // wire the logger into lyrics.js
     setLyricsDebugger(dbg);
+    setLyricsNative(IS_NATIVE, Soma);
     
     // ─── PANEL BEHAVIOR ───
     if (debugToggle && debugPanel) {
