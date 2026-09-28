@@ -1,7 +1,7 @@
 <h2 style="display: inline; vertical-align: middle;"><picture><source media="(prefers-color-scheme: dark)" srcset="public/resistor-dark.svg"><img src="public/resistor.svg" alt="Resistor App" width="48" height="48"></picture>Resistor</h2>
 
 *Lightweight radio stream player with lyrics and tracklist made for SomaFM Indie Pop Rocks! channel…  
-With ♥ && Capacitor*
+With Elise, Capacitor & ❤️*
 
 <p>
   <a href="https://somafm.com/indiepop/"><img alt="SomaFM" src="https://img.shields.io/badge/SomaFM-Indie%20Pop%20Rocks-ff6b6b?style=flat-square&logo=data:image/svg%2Bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTEyIDJhMTAgMTAgMCAwIDAgMCAyMCAxMCAxMCAwIDAgMCAwLTIweiIvPjwvc3ZnPg=="></a>
