@@ -9,19 +9,31 @@ export function setLyricsNative(isNative, somaPlugin) {
   Soma = somaPlugin;
 }
 
+// Late lookup in case the plugin wasn't ready at module-init time.
+function getSoma() {
+  if (Soma) return Soma;
+  if (typeof window !== 'undefined' && window.Capacitor?.Plugins?.Soma) {
+    Soma = window.Capacitor.Plugins.Soma;
+    return Soma;
+  }
+  return null;
+}
+
 // ─── CACHE ───
 const LYRICS_CACHE_KEY = 'resistor_lyrics_cache';
 const LYRICS_CACHE_MAX = 500;
-
-let lyricsCache = {};
-let rateLimitedUntil = 0;
-
 const LYRICS_MISS_KEY = 'resistor_lyrics_misses';
 const MISS_TTL_MS = 24 * 60 * 60 * 1000;
 
+let lyricsCache = {};
+let lyricsMisses = JSON.parse(localStorage.getItem(LYRICS_MISS_KEY) || '{}');
+let rateLimitedUntil = 0;
+
 export function loadLyricsCache() {
   const stored = localStorage.getItem(LYRICS_CACHE_KEY);
-  if (stored) lyricsCache = JSON.parse(stored);
+  if (stored) {
+    try { lyricsCache = JSON.parse(stored); } catch { lyricsCache = {}; }
+  }
   return lyricsCache;
 }
 
@@ -31,22 +43,29 @@ function saveLyricsCache() {
     const toDrop = keys.slice(0, keys.length - LYRICS_CACHE_MAX);
     for (const k of toDrop) delete lyricsCache[k];
   }
-  localStorage.setItem(LYRICS_CACHE_KEY, JSON.stringify(lyricsCache));
+  try {
+    localStorage.setItem(LYRICS_CACHE_KEY, JSON.stringify(lyricsCache));
+  } catch (e) {
+    dbg('LYRICS', 'saveLyricsCache failed:', e.message);
+  }
 }
 
-let lyricsMisses = JSON.parse(localStorage.getItem(LYRICS_MISS_KEY) || '{}');
-
 function saveMisses() {
-  localStorage.setItem(LYRICS_MISS_KEY, JSON.stringify(lyricsMisses));
+  try {
+    localStorage.setItem(LYRICS_MISS_KEY, JSON.stringify(lyricsMisses));
+  } catch (e) {
+    dbg('LYRICS', 'saveMisses failed:', e.message);
+  }
 }
 
 async function cacheGet(key) {
   if (lyricsCache[key]) return lyricsCache[key];
-  if (!IS_NATIVE || !Soma) return null;
+  const plugin = getSoma();
+  if (!IS_NATIVE || !plugin) return null;
   try {
-    const { value } = await Soma.lyricsCacheGet({ key });
+    const { value } = await plugin.lyricsCacheGet({ key });
     if (value) {
-      lyricsCache[key] = value;      // repopulate the fast path
+      lyricsCache[key] = value;
       saveLyricsCache();
       return value;
     }
@@ -59,15 +78,17 @@ async function cacheGet(key) {
 async function cachePut(key, value) {
   lyricsCache[key] = value;
   saveLyricsCache();
-  if (IS_NATIVE && Soma) {
+  const plugin = getSoma();
+  if (IS_NATIVE && plugin) {
     try {
-      await Soma.lyricsCachePut({ key, value });
+      await plugin.lyricsCachePut({ key, value });
     } catch (e) {
       dbg('LYRICS', 'cachePut native failed:', e.message);
     }
   }
 }
 
+// ─── PROVIDERS ───
 async function tryLrclib(artist, title) {
   if (Date.now() < rateLimitedUntil) {
     dbg('LYRICS', `lrclib: skipping, rate-limited for ${Math.round((rateLimitedUntil - Date.now()) / 1000)}s`);
@@ -193,27 +214,23 @@ export async function fetchLyrics(artist, title) {
   const cacheKey = `${artist} - ${title}`;
   dbg('LYRICS', 'fetchLyrics for', artist, '-', title);
 
-  // 1. positive cache (localStorage first, then native)
   const cached = await cacheGet(cacheKey);
   if (cached) {
     dbg('LYRICS', 'cache HIT');
     return cached;
   }
 
-  // 2. negative cache
   if (lyricsMisses[cacheKey] && Date.now() - lyricsMisses[cacheKey] < MISS_TTL_MS) {
     dbg('LYRICS', 'negative cache (recent miss)');
     return null;
   }
 
-  // 3. LRCLIB
   let lyrics = await tryLrclib(artist, title);
   if (lyrics) {
     await cachePut(cacheKey, lyrics);
     return lyrics;
   }
 
-  // 4. ovh suggest
   dbg('LYRICS', 'lrclib miss, trying ovh suggest...');
   lyrics = await tryLyricsOvhSuggest(artist, title);
   if (lyrics) {
@@ -222,13 +239,13 @@ export async function fetchLyrics(artist, title) {
     return lyrics;
   }
 
-  // 5. miss
   dbg('LYRICS', 'all providers missed');
   lyricsMisses[cacheKey] = Date.now();
   saveMisses();
   return null;
 }
 
+// ─── LRC PARSER ───
 export function parseLrc(text) {
   if (!text || !/^\[\d{2}:\d{2}/m.test(text)) return null;
   const lines = [];
