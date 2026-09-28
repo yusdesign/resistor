@@ -30,7 +30,7 @@ async function tryLrclib(artist, title) {
   try {
     const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(artist)}&track_name=${encodeURIComponent(title)}`;
     response = await fetch(url);
-  } catch (e) {
+  } catch {
     return null;
   }
 
@@ -50,12 +50,39 @@ async function tryLrclib(artist, title) {
   }
 }
 
-async function tryLyricsOvh(artist, title) {
+async function tryLyricsOvhSuggest(artist, title) {
+  const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  let search;
+  try {
+    const q = encodeURIComponent(`${artist} ${title}`);
+    search = await fetch(`https://api.lyrics.ovh/suggest/${q}`);
+  } catch {
+    return null;
+  }
+  if (!search.ok) return null;
+
+  let results;
+  try {
+    results = await search.json();
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(results) || results.length === 0) return null;
+
+  const top = results[0];
+  const a = top.artist?.name;
+  const t = top.title;
+  if (!a || !t) return null;
+
+  if (!norm(t).includes(norm(title))) return null;
+
   let response;
   try {
-    const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`;
-    response = await fetch(url);
-  } catch (e) {
+    response = await fetch(
+      `https://api.lyrics.ovh/v1/${encodeURIComponent(a)}/${encodeURIComponent(t)}`
+    );
+  } catch {
     return null;
   }
   if (!response.ok) return null;
@@ -79,14 +106,14 @@ export async function fetchLyrics(artist, title) {
     return null;
   }
 
-  // Try LRCLIB first (better coverage, and may have synced/timed lyrics)
   let lyrics = await tryLrclib(artist, title);
-
-  // Fall back to lyrics.ovh (CORS-friendly, plain text only)
-  if (!lyrics) {
-    lyrics = await tryLyricsOvh(artist, title);
+  if (lyrics) {
+    lyricsCache[cacheKey] = lyrics;
+    saveLyricsCache();
+    return lyrics;
   }
 
+  lyrics = await tryLyricsOvhSuggest(artist, title);
   if (lyrics) {
     lyricsCache[cacheKey] = lyrics;
     saveLyricsCache();
@@ -99,7 +126,6 @@ export async function fetchLyrics(artist, title) {
 }
 
 export function parseLrc(text) {
-  // returns [{ time: seconds, text: "line" }, ...] or null if not LRC
   if (!text || !/^\[\d{2}:\d{2}/m.test(text)) return null;
   const lines = [];
   for (const raw of text.split('\n')) {
