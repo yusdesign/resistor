@@ -1,11 +1,17 @@
+// ─── DEBUG + NATIVE WIRING ───
 let dbg = () => {};
-export function setLyricsDebugger(fn) {
-  dbg = fn;
+export function setLyricsDebugger(fn) { dbg = fn; }
+
+let IS_NATIVE = false;
+let Soma = null;
+export function setLyricsNative(isNative, somaPlugin) {
+  IS_NATIVE = isNative;
+  Soma = somaPlugin;
 }
 
-// ─── LYRICS CORE ───
+// ─── CACHE ───
 const LYRICS_CACHE_KEY = 'resistor_lyrics_cache';
-const LYRICS_CACHE_MAX = 500;   // ~500 tracks × ~2 KB = ~1 MB
+const LYRICS_CACHE_MAX = 500;
 
 let lyricsCache = {};
 let rateLimitedUntil = 0;
@@ -22,8 +28,6 @@ export function loadLyricsCache() {
 function saveLyricsCache() {
   const keys = Object.keys(lyricsCache);
   if (keys.length > LYRICS_CACHE_MAX) {
-    // LRU-ish: drop the oldest half. Since we don't track access times,
-    // approximate by dropping in insertion order (JS objects preserve it).
     const toDrop = keys.slice(0, keys.length - LYRICS_CACHE_MAX);
     for (const k of toDrop) delete lyricsCache[k];
   }
@@ -34,6 +38,34 @@ let lyricsMisses = JSON.parse(localStorage.getItem(LYRICS_MISS_KEY) || '{}');
 
 function saveMisses() {
   localStorage.setItem(LYRICS_MISS_KEY, JSON.stringify(lyricsMisses));
+}
+
+async function cacheGet(key) {
+  if (lyricsCache[key]) return lyricsCache[key];
+  if (!IS_NATIVE || !Soma) return null;
+  try {
+    const { value } = await Soma.lyricsCacheGet({ key });
+    if (value) {
+      lyricsCache[key] = value;      // repopulate the fast path
+      saveLyricsCache();
+      return value;
+    }
+  } catch (e) {
+    dbg('LYRICS', 'cacheGet native failed:', e.message);
+  }
+  return null;
+}
+
+async function cachePut(key, value) {
+  lyricsCache[key] = value;
+  saveLyricsCache();
+  if (IS_NATIVE && Soma) {
+    try {
+      await Soma.lyricsCachePut({ key, value });
+    } catch (e) {
+      dbg('LYRICS', 'cachePut native failed:', e.message);
+    }
+  }
 }
 
 async function tryLrclib(artist, title) {
@@ -154,39 +186,43 @@ async function tryLyricsOvhSuggest(artist, title) {
   }
 }
 
+// ─── MAIN ───
 export async function fetchLyrics(artist, title) {
-  const isNative = typeof window !== 'undefined'
-    && !!window.Capacitor?.isNativePlatform?.();
-  if (!isNative) return null;
+  if (!IS_NATIVE) return null;
 
   const cacheKey = `${artist} - ${title}`;
   dbg('LYRICS', 'fetchLyrics for', artist, '-', title);
 
-  if (lyricsCache[cacheKey]) {
+  // 1. positive cache (localStorage first, then native)
+  const cached = await cacheGet(cacheKey);
+  if (cached) {
     dbg('LYRICS', 'cache HIT');
-    return lyricsCache[cacheKey];
+    return cached;
   }
+
+  // 2. negative cache
   if (lyricsMisses[cacheKey] && Date.now() - lyricsMisses[cacheKey] < MISS_TTL_MS) {
     dbg('LYRICS', 'negative cache (recent miss)');
     return null;
   }
 
+  // 3. LRCLIB
   let lyrics = await tryLrclib(artist, title);
   if (lyrics) {
-    lyricsCache[cacheKey] = lyrics;
-    saveLyricsCache();
+    await cachePut(cacheKey, lyrics);
     return lyrics;
   }
 
+  // 4. ovh suggest
   dbg('LYRICS', 'lrclib miss, trying ovh suggest...');
   lyrics = await tryLyricsOvhSuggest(artist, title);
   if (lyrics) {
     dbg('LYRICS', 'ovh: HIT');
-    lyricsCache[cacheKey] = lyrics;
-    saveLyricsCache();
+    await cachePut(cacheKey, lyrics);
     return lyrics;
   }
 
+  // 5. miss
   dbg('LYRICS', 'all providers missed');
   lyricsMisses[cacheKey] = Date.now();
   saveMisses();
