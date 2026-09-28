@@ -4,7 +4,8 @@
 
     // ─── IMPORTS ───
     import { loadTracklist, saveTracklist, addTrack } from './tracklist.js';
-    import { loadLyricsCache, saveLyricsCache, fetchLyrics, parseLrc, setLyricsDebugger } from './lyrics.js';
+    import { loadLyricsCache, saveLyricsCache, fetchLyrics, parseLrc,
+         setLyricsDebugger, setLyricsNative } from './lyrics.js';
     
     // ─── BUILD INFO ───
     import pkg from '../package.json' with { type: 'json' };
@@ -22,6 +23,9 @@
     const IS_NATIVE = typeof window !== 'undefined'
       && !!window.Capacitor?.isNativePlatform?.();
     const Soma = IS_NATIVE ? window.Capacitor.Plugins.Soma : null;
+
+    setLyricsDebugger(dbg);
+    setLyricsNative(IS_NATIVE, Soma);
     
     // ─── DEBUG LOGGER ───
     const DEBUG = true;
