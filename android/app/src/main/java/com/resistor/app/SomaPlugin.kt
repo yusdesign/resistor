@@ -57,11 +57,13 @@ class SomaPlugin : Plugin() {
                 }
             }.also { it.start(0, false) }   // 0 = no socket read timeout
         }
+        SomaService.start(context)
         call.resolve()
     }
 
     @PluginMethod
     fun stop(call: PluginCall) {
+        SomaService.stop(context)
         server?.stop()
         server = null
         call.resolve()
