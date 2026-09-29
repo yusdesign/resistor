@@ -49,10 +49,22 @@ class SomaPlugin : Plugin() {
         if (server == null) {
             server = object : NanoHTTPD(8765) {
                 override fun serve(session: IHTTPSession): Response {
+                    // Open the upstream BEFORE returning the response,
+                    // so the audio element gets data immediately.
+                    val upstream = try {
+                        openUpstream()
+                    } catch (e: Exception) {
+                        android.util.Log.e("SomaPlugin", "upstream failed", e)
+                        return newFixedLengthResponse(
+                            Response.Status.INTERNAL_ERROR,
+                            "text/plain",
+                            "upstream failed: ${e.message}"
+                        )
+                    }
                     return newChunkedResponse(
                         Response.Status.OK,
                         "audio/aac",
-                        makeReconnectingStream()
+                        makeReconnectingStream(upstream)
                     )
                 }
             }.also { it.start(0, false) }   // 0 = no socket read timeout
@@ -76,7 +88,7 @@ class SomaPlugin : Plugin() {
         val value = prefs.getString(key, null)
         call.resolve(JSObject().put("value", value))
     }
-    
+
     @PluginMethod
     fun lyricsCachePut(call: PluginCall) {
         val key = call.getString("key") ?: return call.reject("missing key")
@@ -85,7 +97,7 @@ class SomaPlugin : Plugin() {
         prefs.edit().putString(key, value).apply()
         call.resolve()
     }
-    
+
     @PluginMethod
     fun lyricsCacheDelete(call: PluginCall) {
         val key = call.getString("key") ?: return call.reject("missing key")
@@ -93,7 +105,7 @@ class SomaPlugin : Plugin() {
         prefs.edit().remove(key).apply()
         call.resolve()
     }
-    
+
     @PluginMethod
     fun lyricsCacheKeys(call: PluginCall) {
         val prefs = context.getSharedPreferences(PREFS_NAME, 0)
@@ -101,7 +113,7 @@ class SomaPlugin : Plugin() {
         for (k in prefs.all.keys) arr.put(k)
         call.resolve(JSObject().put("keys", arr))
     }
-    
+
     @PluginMethod
     fun lyricsCacheClear(call: PluginCall) {
         val prefs = context.getSharedPreferences(PREFS_NAME, 0)
@@ -113,10 +125,13 @@ class SomaPlugin : Plugin() {
      * An InputStream that transparently re-opens the upstream connection
      * when SomaFM rotates it. From NanoHTTPD's point of view it's one
      * continuous stream; the audio element never sees an EOF.
+     *
+     * Takes the first connection as a parameter, so serve() can open it
+     * before sending headers and fail fast if the upstream is unreachable.
      */
-    private fun makeReconnectingStream(): InputStream {
+    private fun makeReconnectingStream(initial: InputStream): InputStream {
         return object : InputStream() {
-            private var current: InputStream = openUpstream()
+            private var current: InputStream = initial
 
             private fun reopen() {
                 try { current.close() } catch (_: Exception) {}
@@ -124,19 +139,27 @@ class SomaPlugin : Plugin() {
             }
 
             override fun read(): Int {
-                var b = current.read()
+                var b = try { current.read() } catch (e: Exception) { -1 }
                 if (b == -1) {
-                    reopen()
-                    b = current.read()
+                    try {
+                        reopen()
+                        b = current.read()
+                    } catch (e: Exception) {
+                        b = -1
+                    }
                 }
                 return b
             }
 
             override fun read(buf: ByteArray, off: Int, len: Int): Int {
-                var n = current.read(buf, off, len)
+                var n = try { current.read(buf, off, len) } catch (e: Exception) { -1 }
                 if (n <= 0) {
-                    reopen()
-                    n = current.read(buf, off, len)
+                    try {
+                        reopen()
+                        n = current.read(buf, off, len)
+                    } catch (e: Exception) {
+                        n = -1
+                    }
                 }
                 return n
             }
