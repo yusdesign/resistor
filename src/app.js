@@ -181,12 +181,14 @@
     let reconnectAttempts = 0;
     let audio = null;
     let metadataTimer = null;
+    let isTracklistOpen = false;
     let isEliseMode = false;
     let currentSong = { artist: '', title: '' };
     let streamUrls = [];
     let currentStreamIndex = 0;
     let lyricLines = [];
     let activeLyricIdx = -1;
+    let playState = 'idle';   // 'idle' | 'starting' | 'playing' | 'pausing'
     
     let settings = {
       darkMode: true,
@@ -461,6 +463,7 @@
 
         audio.addEventListener('playing', () => {
           dbg('AUDIO', 'playing');
+          playState = 'playing';
           isPlaying = true;
           reconnectAttempts = 0;
           updateUI(true);
@@ -471,16 +474,23 @@
         
         audio.addEventListener('pause', () => {
           dbg('AUDIO', 'pause');
+          playState = 'idle';
           isPlaying = false;
           updateUI(false);
           setStatus('⏸ Paused', '');
           stopMetadataLoop();
         });
         
+        /* audio.addEventListener('error', () => {
+          // ... existing code ...
+          // In each branch that ends the attempt, set playState = 'idle'
+        }); */
+        
         audio.addEventListener('waiting', () => {
           const now = Date.now();
           if (now - lastWaitingLogAt > 2000) {
             dbg('AUDIO', 'waiting (buffer underrun)');
+            playState = 'idle';
             lastWaitingLogAt = now;
           }
           if (isPlaying) setStatus('⏳ Buffering…', 'buffering');
@@ -488,11 +498,13 @@
         
         audio.addEventListener('stalled', () => {
           dbg('AUDIO', 'stalled (no data for ~3s)');
+          playState = 'idle';
           if (isPlaying) setStatus('⏳ Stalled…', 'buffering');
         });
         
         audio.addEventListener('canplay', () => {
           dbg('AUDIO', 'canplay (ready to resume)');
+          playState = 'idle';
         });
 
         audio.addEventListener('timeupdate', updateActiveLyric);
@@ -501,16 +513,19 @@
           const code = audio.error?.code;
           const msg = audio.error?.message;
           dbg('AUDIO', 'error', { code, msg });
+          playState = 'idle';
         
           if (settings.autoReconnect && isPlaying && reconnectAttempts < 3) {
             reconnectAttempts++;
             dbg('RECONNECT', `attempt ${reconnectAttempts}/3`);
+            playState = 'idle';
             setStatus(`⟳ Reconnecting… (${reconnectAttempts}/3)`, 'buffering');
             setTimeout(() => {
               if (!audio) return;
               audio.src = 'http://127.0.0.1:8765/?t=' + Date.now();
               audio.play().catch((e) => {
                 dbg('RECONNECT', 'play failed', e.name, e.message);
+                playState = 'idle';
                 if (reconnectAttempts >= 3) {
                   setStatus('❌ Stream error', 'error');
                   isPlaying = false;
@@ -520,6 +535,7 @@
             }, 1500 * reconnectAttempts);
           } else {
             dbg('RECONNECT', 'giving up', { autoReconnect: settings.autoReconnect, isPlaying, reconnectAttempts });
+            playState = 'idle';
             setStatus('❌ Stream error', 'error');
             isPlaying = false;
             updateUI(false);
@@ -532,6 +548,7 @@
           dbg('SETUP', 'audio.play() resolved');
         } catch (e) {
           dbg('SETUP', 'audio.play() rejected', e.name, e.message);
+          playState = 'idle';
           setStatus('⚠️ Play error', 'error');
         }
     
@@ -564,28 +581,32 @@
 
     // ─── PLAYBACK ───
     async function togglePlay() {
-      if (!audio || audio.src === '') {
-        await setupAudio();
-        if (!audio) return;
+      if (playState === 'starting') {
+        dbg('TOGGLE', 'ignoring tap, already starting');
+        return;
       }
-      if (isPlaying) {
-        audio.pause();
-      } else {
-        reconnectAttempts = 0;
-        try {
-          await audio.play();
-        } catch (e) {
-          console.error('Play error:', e);
-          // Re-setup audio and try again
+      if (playState === 'playing') {
+        playState = 'pausing';
+        if (audio) audio.pause();
+        return;
+      }
+      if (playState === 'pausing') {
+        dbg('TOGGLE', 'ignoring tap, pausing');
+        return;
+      }
+    
+      // idle → starting
+      playState = 'starting';
+      dbg('TOGGLE', 'starting playback');
+      try {
+        if (!audio || audio.src === '') {
           await setupAudio();
-          if (audio) {
-            try {
-              await audio.play();
-            } catch (retryError) {
-              setStatus('⚠️ Play error', 'error');
-            }
-          }
         }
+        if (audio) await audio.play();
+      } catch (e) {
+        dbg('TOGGLE', 'start failed:', e.name, e.message);
+        playState = 'idle';
+        setStatus('⚠️ Play error', 'error');
       }
     }
 
@@ -718,10 +739,22 @@
 
     // ─── VISIBILITY ───
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden && audio && isPlaying) {
-        setStatus('🎵 Background', 'playing');
-      } else if (!document.hidden && audio && isPlaying) {
-        setStatus(isEliseMode ? '❤️ Elise Mode' : '🎵 Playing', 'playing');
+      if (document.hidden) {
+        if (audio && isPlaying) setStatus('🎵 Background', 'playing');
+      } else {
+        if (audio && !audio.paused) {
+          // still playing — sync the state
+          playState = 'playing';
+          isPlaying = true;
+          setStatus(isEliseMode ? '❤️ Elise Mode' : '🎵 Playing', 'playing');
+        } else {
+          // audio stopped while backgrounded — reset so next tap works
+          dbg('VISIBILITY', 'audio paused after background, resetting playState');
+          playState = 'idle';
+          isPlaying = false;
+          updateUI(false);
+          setStatus('⏸ Paused', '');
+        }
       }
     });
 
