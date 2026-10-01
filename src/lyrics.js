@@ -1,94 +1,61 @@
-// ─── DEBUG + NATIVE WIRING ───
+// ─── LYRICS: providers + session cache + LRC parser ───
+import { readValue, writeValue } from './storage.js';
+
 let dbg = () => {};
 export function setLyricsDebugger(fn) { dbg = fn; }
 
+// Only lyrics needs to know this. Everything else goes through storage.js.
 let IS_NATIVE = false;
-let Soma = null;
-export function setLyricsNative(isNative, somaPlugin) {
-  IS_NATIVE = isNative;
-  Soma = somaPlugin;
-}
-
-// Late lookup in case the plugin wasn't ready at module-init time.
-function getSoma() {
-  if (Soma) return Soma;
-  if (typeof window !== 'undefined' && window.Capacitor?.Plugins?.Soma) {
-    Soma = window.Capacitor.Plugins.Soma;
-    return Soma;
-  }
-  return null;
-}
+export function setLyricsNative(isNative) { IS_NATIVE = isNative; }
 
 // ─── CACHE ───
-const LYRICS_CACHE_KEY = 'resistor_lyrics_cache';
-const LYRICS_CACHE_MAX = 500;
 const LYRICS_MISS_KEY = 'resistor_lyrics_misses';
+const LYRICS_CACHE_MAX = 500;
 const MISS_TTL_MS = 24 * 60 * 60 * 1000;
 
-let lyricsCache = {};
-let lyricsMisses = JSON.parse(localStorage.getItem(LYRICS_MISS_KEY) || '{}');
+let lyricsCache = {};    // session-only, per-track keys pulled from storage
+let lyricsMisses = {};   // persisted under LYRICS_MISS_KEY
 let rateLimitedUntil = 0;
 
-export function loadLyricsCache() {
-  const stored = localStorage.getItem(LYRICS_CACHE_KEY);
-  if (stored) {
-    try { lyricsCache = JSON.parse(stored); } catch { lyricsCache = {}; }
+export async function loadLyricsCache() {
+  const misses = await readValue(LYRICS_MISS_KEY);
+  if (misses) {
+    try { lyricsMisses = JSON.parse(misses); }
+    catch { lyricsMisses = {}; }
   }
+  // Per-track lyric entries load lazily in cacheGet.
   return lyricsCache;
 }
 
-function saveLyricsCache() {
+function pruneLyricsCache() {
   const keys = Object.keys(lyricsCache);
-  if (keys.length > LYRICS_CACHE_MAX) {
-    const toDrop = keys.slice(0, keys.length - LYRICS_CACHE_MAX);
-    for (const k of toDrop) delete lyricsCache[k];
-  }
-  try {
-    localStorage.setItem(LYRICS_CACHE_KEY, JSON.stringify(lyricsCache));
-  } catch (e) {
-    dbg('LYRICS', 'saveLyricsCache failed:', e.message);
-  }
+  if (keys.length <= LYRICS_CACHE_MAX) return;
+  const toDrop = keys.slice(0, keys.length - LYRICS_CACHE_MAX);
+  for (const k of toDrop) delete lyricsCache[k];
 }
 
 function saveMisses() {
-  try {
-    localStorage.setItem(LYRICS_MISS_KEY, JSON.stringify(lyricsMisses));
-  } catch (e) {
-    dbg('LYRICS', 'saveMisses failed:', e.message);
-  }
+  writeValue(LYRICS_MISS_KEY, JSON.stringify(lyricsMisses));
 }
 
 async function cacheGet(key) {
   if (lyricsCache[key]) return lyricsCache[key];
-  const plugin = getSoma();
-  if (!IS_NATIVE || !plugin) return null;
-  try {
-    const { value } = await plugin.lyricsCacheGet({ key });
-    if (value) {
-      lyricsCache[key] = value;
-      saveLyricsCache();
-      return value;
-    }
-  } catch (e) {
-    dbg('LYRICS', 'cacheGet native failed:', e.message);
+  const value = await readValue(key);
+  if (value) {
+    lyricsCache[key] = value;
+    pruneLyricsCache();
+    return value;
   }
   return null;
 }
 
 async function cachePut(key, value) {
   lyricsCache[key] = value;
-  saveLyricsCache();
-  const plugin = getSoma();
-  if (IS_NATIVE && plugin) {
-    try {
-      await plugin.lyricsCachePut({ key, value });
-    } catch (e) {
-      dbg('LYRICS', 'cachePut native failed:', e.message);
-    }
-  }
+  pruneLyricsCache();
+  await writeValue(key, value);
 }
 
-// ─── PROVIDERS ───
+// ─── PROVIDER: LRCLIB /api/get ───
 async function tryLrclib(artist, title) {
   if (Date.now() < rateLimitedUntil) {
     dbg('LYRICS', `lrclib: skipping, rate-limited for ${Math.round((rateLimitedUntil - Date.now()) / 1000)}s`);
@@ -144,6 +111,7 @@ async function tryLrclib(artist, title) {
   return lyrics;
 }
 
+// ─── PROVIDER: lyrics.ovh suggest ───
 async function tryLyricsOvhSuggest(artist, title) {
   const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
   const q = encodeURIComponent(`${artist} ${title}`);
