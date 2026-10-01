@@ -20,13 +20,31 @@
   margin-bottom: 8px;
 }
 
-.lyrics-panel .header .icon-btn {
-  height: 23px;
-  border-radius: 2px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  transition: background 0.2s, border-color 0.2s, opacity 0.2s, transform 0.15s;
+.lyrics-panel .header .lyrics-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
+
+.lyrics-panel .header .offset-label {
+  font-size: 11px;
+  color: var(--muted);
+  min-width: 44px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.lyrics-panel .header .icon-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 16px;
+  padding: 0 6px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+.lyrics-panel .header .icon-btn:hover { opacity: 1; }
 
 .lyrics-panel .content {
   font-size: 14px;
