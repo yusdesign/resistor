@@ -3,9 +3,18 @@
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     // ─── IMPORTS ───
-    import { loadTracklist, saveTracklist, addTrack } from './tracklist.js';
-    import { loadLyricsCache, saveLyricsCache, fetchLyrics, parseLrc,
-         setLyricsDebugger, setLyricsNative } from './lyrics.js';
+    // import { loadTracklist, saveTracklist, addTrack } from './tracklist.js';
+    import {
+      loadLibrary, syncLibraryFromNative, noteTrack,
+      markLyrics, markLyricsMissing,
+      getOffset, setOffset, getLibraryList,
+      setLibraryDebugger, setLibraryNative,
+    } from './library.js';
+    import { 
+      loadLyricsCache, saveLyricsCache, fetchLyrics, 
+      parseLrc, setLyricsDebugger, setLyricsNative,
+    } from './lyrics.js';
+    
     
     // ─── BUILD INFO ───
     import pkg from '../package.json' with { type: 'json' };
@@ -60,6 +69,8 @@
     // wire the logger into lyrics.js
     setLyricsDebugger(dbg);
     setLyricsNative(IS_NATIVE, Soma);
+    setLibraryDebugger(dbg);
+    setLibraryNative(IS_NATIVE, Soma);
     
     // ─── PANEL BEHAVIOR ───
     if (debugToggle && debugPanel) {
@@ -167,9 +178,7 @@
     let reconnectAttempts = 0;
     let audio = null;
     let metadataTimer = null;
-    let isTracklistOpen = false;
     let isEliseMode = false;
-    let tracklist = [];
     let currentSong = { artist: '', title: '' };
     let streamUrls = [];
     let currentStreamIndex = 0;
@@ -180,13 +189,31 @@
       darkMode: true,
       bufferSize: 30,
       autoReconnect: true,
-      eliseMode: false
+      eliseMode: true
     };
+
+    let currentLyricsOffset = 0;
+    let currentLyricsArtist = '';
+    let currentLyricsTitle = '';
 
     // ─── HELPERS ───
     function setStatus(text, type = '') {
       statusEl.textContent = text;
       statusEl.className = 'status ' + type;
+    }
+
+    function updateOffsetLabel() {
+      const el = document.getElementById('lyricsOffset');
+      if (el) el.textContent = (currentLyricsOffset >= 0 ? '+' : '') + currentLyricsOffset.toFixed(1) + 's';
+    }
+    
+    function nudgeOffset(delta) {
+      currentLyricsOffset = Math.round((currentLyricsOffset + delta) * 10) / 10;
+      if (currentLyricsArtist && currentLyricsTitle) {
+        setOffset(currentLyricsArtist, currentLyricsTitle, currentLyricsOffset);
+      }
+      updateOffsetLabel();
+      updateActiveLyric();
     }
 
     function updateUI(playing) {
@@ -204,35 +231,48 @@
       }
     }
 
-    // ─── RENDER TRACKLIST ───
-    function renderTracklist() {
-      trackCount.textContent = tracklist.length;
-      if (tracklist.length === 0) {
-        tracklistItems.innerHTML = '<div style="padding:8px 0;color:var(--muted);font-size:12px;">No tracks yet.</div>';
+    // ─── RENDER LIBRARY'S TRACKLIST ───
+    function renderLibrary() {
+      const list = getLibraryList();
+      trackCount.textContent = list.length;
+    
+      if (list.length === 0) {
+        tracklistItems.innerHTML =
+          '<div style="padding:8px 0;color:var(--muted);font-size:12px;">No tracks yet.</div>';
         return;
       }
+    
       let html = '';
-      tracklist.forEach(t => {
-        html += `<div class="track-item"><span>${t.artist} — ${t.title}</span><span class="count">${t.count}x</span></div>`;
-      });
+      for (const t of list) {
+        const indicator = t.hasLyrics ? (t.synced ? '🎼' : '📝') : '';
+        html += `<div class="track-item" data-artist="${escapeHtml(t.artist)}" data-title="${escapeHtml(t.title)}">
+          <span>${escapeHtml(t.artist)} — ${escapeHtml(t.title)}</span>
+          <span class="count">${t.count}× ${indicator}</span>
+        </div>`;
+      }
       tracklistItems.innerHTML = html;
+    }
+    
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
     }
 
     // ─── UPDATE NOW PLAYING ───
     function updateNowPlaying(artist, title) {
       if (!artist || !title) return;
       if (currentSong.artist === artist && currentSong.title === title) return;
-
+    
       currentSong.artist = artist;
       currentSong.title = title;
       artistEl.textContent = artist;
       titleEl.textContent = title;
       setStatus('🎵 Now playing', 'playing');
-
-      tracklist = addTrack(tracklist, title, artist);
-      saveTracklist(tracklist);
-      renderTracklist();
-
+    
+      noteTrack(artist, title);
+      renderLibrary();
+    
       if (isEliseMode) {
         displayLyrics(artist, title);
       }
@@ -277,21 +317,27 @@
         return;
       }
     
+      currentLyricsOffset = getOffset(artist, title);
+      currentLyricsArtist = artist;
+      currentLyricsTitle = title;
+      updateOffsetLabel();
+    
       try {
-        dbg('LYRICS', 'calling fetchLyrics');
         const lyrics = await Promise.race([
           fetchLyrics(artist, title),
           new Promise(resolve => setTimeout(() => resolve(null), 8000)),
         ]);
-        dbg('LYRICS', 'fetchLyrics returned:', lyrics ? `${lyrics.length} chars` : 'null');
     
         if (!lyrics) {
+          markLyricsMissing(artist, title);
+          renderLibrary();
           lyricsContent.innerHTML = '📝 Lyrics unavailable for this track.';
           return;
         }
     
         const parsed = parseLrc(lyrics);
-        dbg('LYRICS', 'parseLrc:', parsed ? `${parsed.length} lines` : 'not LRC');
+        markLyrics(artist, title, { synced: !!parsed });
+        renderLibrary();
     
         if (parsed) {
           lyricLines = parsed;
@@ -301,9 +347,10 @@
           activeLyricIdx = -1;
           updateActiveLyric();
         } else {
+          lyricLines = [];
           lyricsContent.innerHTML = lyrics
             .split('\n').filter(Boolean)
-            .map(l => `<span class="line">${l}</span>`)
+            .map(l => `<span class="line">${escapeHtml(l)}</span>`)
             .join('');
         }
       } catch (e) {
@@ -314,7 +361,7 @@
     
     function updateActiveLyric() {
       if (!lyricLines.length || !audio) return;
-      const t = audio.currentTime;
+      const t = audio.currentTime - currentLyricsOffset;
       let idx = -1;
       for (let i = 0; i < lyricLines.length; i++) {
         if (lyricLines[i].time <= t) idx = i;
@@ -328,7 +375,7 @@
     
       const active = spans[idx];
       if (active && lyricsPanel.style.display === 'block') {
-        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
     }
 
@@ -546,6 +593,15 @@
     function toggleTracklist() {
       isTracklistOpen = !isTracklistOpen;
       tracklistItems.classList.toggle('open', isTracklistOpen);
+      
+      tracklistItems.addEventListener('click', (e) => {
+        const row = e.target.closest('.track-item');
+        if (!row) return;
+        const artist = row.dataset.artist;
+        const title = row.dataset.title;
+        if (artist && title) displayLyrics(artist, title);
+      });
+      
       tracklistArrow.classList.toggle('open', isTracklistOpen);
     }
     tracklistHeader.addEventListener('click', toggleTracklist);
@@ -673,16 +729,20 @@
 
     // ─── INIT ───
     loadSettings();
-    tracklist = loadTracklist();
+    loadLibrary();
     loadLyricsCache();
-    renderTracklist();
+    syncLibraryFromNative().then(renderLibrary);
+    renderLibrary();
     setStatus('🎵 Ready', '');
     updateUI(false);
     console.log('🎸 Resistor, Indie Radio App');
-
+    
     // ─── EVENT BINDINGS ───
     playBtn.addEventListener('click', togglePlay);
-
+    
+    document.getElementById('offsetBack')?.addEventListener('click', () => nudgeOffset(-0.5));
+    document.getElementById('offsetFwd')?.addEventListener('click', () => nudgeOffset(0.5));
+    
     // Pre-fetch stream URLs
     fetchStreamUrls().then(urls => {
       streamUrls = urls;
