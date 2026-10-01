@@ -125,18 +125,23 @@
     <div class="lyrics-panel" id="lyricsPanel">
       <div class="header">
         <span>📜 Lyrics</span>
-        <button class="icon-btn" id="closeLyrics" aria-label="Close lyrics">
-          <svg viewBox="0 0 24 24" style="width:20px;height:20px;"><use href="#close-icon"/></svg>
-        </button>
+        <span class="lyrics-controls">
+          <button class="icon-btn" id="offsetBack" aria-label="Shift lyrics back">⟨</button>
+          <span id="lyricsOffset" class="offset-label">+0.0s</span>
+          <button class="icon-btn" id="offsetFwd" aria-label="Shift lyrics forward">⟩</button>
+          <button class="icon-btn" id="closeLyrics" aria-label="Close lyrics">
+            <svg viewBox="0 0 24 24" style="width:20px;height:20px;"><use href="#close-icon"/></svg>
+          </button>
+        </span>
       </div>
       <div class="content" id="lyricsContent">
-        <p style="color: var(--muted);">🎵 Play a track to see lyrics.</p>
+        <p style="color: var(--muted);">🎵 Play a track to see lyrics.</p>  
       </div>
     </div>
 
     <div class="tracklist-section">
       <div class="tracklist-header" id="tracklistHeader">
-        <span>📋 Tracklist (<span id="trackCount">0</span>)</span>
+        <span>📚 Library (<span id="trackCount">0</span>)</span>
         <span class="arrow" id="tracklistArrow">▼</span>
       </div>
       <div class="tracklist-items" id="tracklistItems"></div>
