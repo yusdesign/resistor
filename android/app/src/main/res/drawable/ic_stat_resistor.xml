@@ -4,14 +4,46 @@
     android:viewportWidth="24"
     android:viewportHeight="24">
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M8.3,12.6l4.24,-4.24l3.18,3.18l-4.27,4.22z" />
+        android:fillColor="#A91B34FF"
+        android:pathData="M8.1 12.4 4.24-4.24 3.18 3.18-4.27 4.22z" />
     <path
-        android:strokeColor="#FFFFFFFF"
+        android:strokeColor="#FFCB2FFF"
         android:strokeWidth="1"
-        android:pathData="M7.24,12.5l4.23,4.25" />
+        android:pathData="M11 9.63c0.0159 1.41 1.1 2.58 3.07 3.42" />
     <path
-        android:strokeColor="#FFFFFFFF"
+        android:strokeColor="#FFCB2FFF"
         android:strokeWidth="1"
-        android:pathData="M12.6,7.22l4.24,4.24" />
+        android:pathData="M9.8 10.9c0.0848 1.64 2.48 3.25 3.03 3.42" />
+    <path
+        android:strokeColor="#000000FF"
+        android:strokeWidth="2"
+        android:pathData="M7.04 12.3 4.23 4.25z" />
+    <path
+        android:strokeColor="#000000FF"
+        android:strokeWidth="2"
+        android:pathData="M12.4 7.01 4.24 4.24z" />
+    <path
+        android:strokeColor="#000000FF"
+        android:strokeWidth="1"
+        android:pathData="M11.3 16.6c-0.0159-1.1 4.08-5.14 5.3-5.3" />
+    <path
+        android:strokeColor="#000000FF"
+        android:strokeWidth="1"
+        android:pathData="M12.8 7c0.0159 1.1-4.08 5.14-5.3 5.3" />
+    <path
+        android:strokeColor="#000000FF"
+        android:strokeWidth="1"
+        android:pathData="M16.8 6.83-2.88 2.88z" />
+    <path
+        android:strokeColor="#000000FF"
+        android:strokeWidth="1"
+        android:pathData="M9.69 13.9-2.88 2.88z" />
+    <path
+        android:strokeColor="#000000FF"
+        android:strokeWidth="1"
+        android:pathData="M18.9 6.05a1.26 1.26 0 0 1-1.26 1.26 1.26 1.26 0 0 1-1.26-1.26 1.26 1.26 0 0 1 1.26-1.26 1.26 1.26 0 0 1 1.26 1.26z" />
+    <path
+        android:strokeColor="#000000FF"
+        android:strokeWidth="1"
+        android:pathData="M7.14 17.6a1.26 1.26 0 0 1-1.26 1.26 1.26 1.26 0 0 1-1.26-1.26 1.26 1.26 0 0 1 1.26-1.26 1.26 1.26 0 0 1 1.26 1.26z" />
 </vector>
