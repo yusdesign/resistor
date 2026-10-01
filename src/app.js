@@ -5,17 +5,18 @@
     // ─── IMPORTS ───
     // import { loadTracklist, saveTracklist, addTrack } from './tracklist.js';
     import {
-      loadLibrary, syncLibraryFromNative, noteTrack,
-      markLyrics, markLyricsMissing,
+      loadLyricsCache, fetchLyrics, parseLrc,
+      setLyricsDebugger, setLyricsNative,
+    } from './lyrics.js';
+    import {
+      loadLibrary, noteTrack, markLyrics, markLyricsMissing,
       getOffset, setOffset, getLibraryList,
       setLibraryDebugger, setLibraryNative,
     } from './library.js';
-    import { 
-      loadLyricsCache, saveLyricsCache, fetchLyrics, 
-      parseLrc, setLyricsDebugger, setLyricsNative,
-    } from './lyrics.js';
-    
-    
+    import {
+      setStorageDebugger, setStorageNative,
+    } from './storage.js';
+   
     // ─── BUILD INFO ───
     import pkg from '../package.json' with { type: 'json' };
     const VERSION = pkg.version;
@@ -66,11 +67,13 @@
       }
     }
 
-    // wire the logger into lyrics.js
+    // ─── LOGGER WIRING into lyrics.js ───
     setLyricsDebugger(dbg);
     setLyricsNative(IS_NATIVE, Soma);
     setLibraryDebugger(dbg);
     setLibraryNative(IS_NATIVE, Soma);
+    setStorageDebugger(dbg);
+    setStorageNative(IS_NATIVE, Soma);
     
     // ─── PANEL BEHAVIOR ───
     if (debugToggle && debugPanel) {
@@ -728,22 +731,20 @@
     });
 
     // ─── INIT ───
-    loadSettings();
-    loadLibrary();
-    loadLyricsCache();
-    syncLibraryFromNative().then(renderLibrary);
-    renderLibrary();
-    setStatus('🎵 Ready', '');
-    updateUI(false);
-    console.log('🎸 Resistor, Indie Radio App');
+    (async () => {
+      loadSettings();
+      await loadLibrary();
+      await loadLyricsCache();
+      renderLibrary();
+      setStatus('🎵 Ready', '');
+      updateUI(false);
+      console.log('🎸 Resistor, Indie Radio App');
+    })();
     
-    // ─── EVENT BINDINGS ───
     playBtn.addEventListener('click', togglePlay);
-    
     document.getElementById('offsetBack')?.addEventListener('click', () => nudgeOffset(-0.5));
     document.getElementById('offsetFwd')?.addEventListener('click', () => nudgeOffset(0.5));
     
-    // Pre-fetch stream URLs
     fetchStreamUrls().then(urls => {
       streamUrls = urls;
       console.log(`📡 Found ${urls.length} streams`);
