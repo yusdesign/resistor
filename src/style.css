@@ -65,6 +65,7 @@ body {
 .header h1 {
   font-size: 18px;
   font-weight: 600;
+  letter-spacing: 0.02em;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -98,6 +99,26 @@ body {
   stroke: var(--text);
   fill: none;
 }
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s, background 0.2s, border-color 0.2s, transform 0.15s;
+}
+.icon-btn:hover { opacity: 1; border-color: var(--accent); }
+.icon-btn:active { transform: scale(0.94); }
+.icon-btn.active { opacity: 1; border-color: var(--playing); color: var(--playing); }
+.icon-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; }
+.icon-btn.icon-fill svg { stroke: none; fill: currentColor; }
 .artwork {
   display: flex;
   justify-content: center;
@@ -433,6 +454,24 @@ body {
 .about-hint {
   color: var(--playing);
   opacity: 0.85;
+}
+/* Unify */
+.header { margin-bottom: 16px; }
+.artwork { margin-bottom: 12px; }
+.now-playing { margin-bottom: 16px; }
+.controls-bar { margin: 12px 0 8px; }
+.station-info { margin-top: 8px; }
+.status { margin-top: 12px; }
+.volume-wrap { margin-top: 12px; }
+.lyrics-panel { margin-top: 16px; }
+.tracklist-section { margin-top: 16px; padding-top: 12px; }
+.player,
+.lyrics-panel,
+.settings-modal {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: 0 12px 40px var(--shadow);
 }
 /* ─── DEBUG PANEL ─── */
 .debug-panel {
