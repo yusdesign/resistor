@@ -56,6 +56,9 @@ jobs:
           fi
           ls -lh resources/
 
+      - name: Build web assets
+        run: npm run build
+
       - name: Generate Android resources
         run: npx @capacitor/assets generate --android
         continue-on-error: true
