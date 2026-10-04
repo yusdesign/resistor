@@ -14,7 +14,7 @@
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
     
-        <!-- match --bg -->
+        <!-- match bg -->
         <item name="android:statusBarColor">#0d0d1a</item>
         <item name="android:navigationBarColor">#0d0d1a</item>
         <item name="android:windowLightStatusBar">false</item>
