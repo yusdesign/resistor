@@ -43,30 +43,47 @@ jobs:
           set -e
           mkdir -p resources
           if [ -f resources/icon.svg ]; then
-            rsvg-convert -w 1024 -h 1024 resources/icon.svg -o resources/icon.png
+            rsvg-convert -w 1024 -h 1024 \
+              --background-color=#0d0d1a \
+              resources/icon.svg -o resources/icon.png
             echo "→ icon.png generated"
           else
             echo "! resources/icon.svg not found, skipping"
           fi
           if [ -f resources/splash.svg ]; then
-            rsvg-convert -w 2732 -h 2732 resources/splash.svg -o resources/splash.png
+            rsvg-convert -w 2732 -h 2732 \
+              --background-color=#0d0d1a \
+              resources/splash.svg -o resources/splash.png
             echo "→ splash.png generated"
-          else
-            echo "! resources/splash.svg not found, skipping"
           fi
+          rm -f resources/icon-foreground.png resources/icon-background.png
           ls -lh resources/
 
       - name: Clean old generated resources
         run: |
-          rm -rf android/app/src/main/res/mipmap-*
-          rm -rf android/app/src/main/res/drawable*
-          rm -f android/app/src/main/res/mipmap-anydpi-v26/ic_launcher*.xml
+          find android/app/src/main/res -type f \
+            \( -name "ic_launcher*.png" \
+            -o -name "ic_launcher*.xml" \
+            -o -name "splash.png" \) \
+            -delete
+          find android/app/src/main/res -type d -empty -delete
+          echo "Remaining res tree:"
+          find android/app/src/main/res -type d | sort
 
       - name: Build web assets
         run: npm run build
 
       - name: Generate Android resources
         run: npx @capacitor/assets generate --android
+
+      - name: Verify icons
+        run: |
+          echo "── mipmap-xxxhdpi ──"
+          ls -la android/app/src/main/res/mipmap-xxxhdpi/ || echo "(none)"
+          echo "── mipmap-anydpi-v26 ──"
+          ls -la android/app/src/main/res/mipmap-anydpi-v26/ || echo "(none)"
+          echo "── resources ──"
+          ls -la resources/
 
       - name: Sync Capacitor
         run: |
@@ -80,9 +97,9 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json
-          git add android/app/src/main/res 2>/dev/null || true
-          git add android/app/src/main/assets/capacitor.plugins.json 2>/dev/null || true
-          git add resources 2>/dev/null || true
+          git add -A package.json package-lock.json
+          git add -A android/app/src/main/res 2>/dev/null || true
+          git add -A android/app/src/main/assets/capacitor.plugins.json 2>/dev/null || true
+          git add -A resources 2>/dev/null || true
           git commit -m "bootstrap: splash-screen plugin + generated assets" || echo "nothing to commit"
           git push
